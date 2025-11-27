@@ -1,0 +1,267 @@
+<main class="min-h-screen bg-gray-900 text-gray-100 p-4 sm:p-8">
+  <div class="max-w-screen-2xl mx-auto">
+    <header class="text-center mb-8">
+      <h1 class="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-600">
+        NFL Player Stat Graphics
+      </h1>
+      <p class="mt-2 text-lg text-gray-400">
+        Generate stats, customize, and share graphics for your favorite players.
+      </p>
+    </header>
+
+    @if (showInstructions()) {
+      <div class="relative bg-gray-800 border border-indigo-500/30 text-gray-300 p-6 rounded-lg mb-8 shadow-lg max-w-4xl mx-auto">
+        <button (click)="dismissInstructions()" aria-label="Dismiss instructions" class="absolute top-3 right-3 text-gray-500 hover:text-white transition-colors">
+          <i class="fas fa-times fa-lg" aria-hidden="true"></i>
+        </button>
+        <h2 class="text-2xl font-bold text-white mb-4">How to Use</h2>
+        <ol class="list-decimal list-inside space-y-2">
+          <li><strong>Search for a Player:</strong> Type a player's name and hit "Search".</li>
+          <li><strong>Add a Comparison:</strong> Use the "Player Comparison" toggle to add a second player.</li>
+          <li><strong>Customize:</strong> Use the controls to change the template, colors, and displayed stats.</li>
+          <li><strong>Export & Share:</strong> Click "Export PNG" to save, "Share" to post, or "Change Image" to upload your own.</li>
+        </ol>
+      </div>
+    }
+
+    <div class="grid grid-cols-1 gap-4 mx-auto mb-10" [class.max-w-xl]="!comparisonMode()" [class.max-w-4xl]="comparisonMode()" [class.md:grid-cols-2]="comparisonMode()">
+      <!-- Player 1 Search -->
+      <form (submit)="handleSearch($event, 1)" role="search" aria-label="Search for Player 1" class="flex gap-2 p-2 bg-gray-800 rounded-full shadow-lg">
+        <input type="text"
+               aria-label="Player 1 Name"
+               placeholder="Player 1 (e.g., Travis Kelce)"
+               class="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 px-4"
+               [ngModel]="searchTerm1()"
+               (ngModelChange)="searchTerm1.set($event)"
+               name="searchTerm1">
+        <button type="submit"
+                aria-label="Search for Player 1"
+                class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800 disabled:cursor-not-allowed text-white font-bold py-2 px-5 rounded-full transition-colors duration-200 flex items-center justify-center"
+                [disabled]="isLoading1() || !searchTerm1().trim()">
+          @if (isLoading1()) {
+            <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+          } @else {
+             <span class="md:hidden">P1</span><span class="hidden md:inline">Search</span>
+          }
+        </button>
+      </form>
+       <!-- Player 2 Search -->
+      @if (comparisonMode()) {
+        <form (submit)="handleSearch($event, 2)" role="search" aria-label="Search for Player 2" class="flex gap-2 p-2 bg-gray-800 rounded-full shadow-lg">
+          <input type="text"
+                aria-label="Player 2 Name"
+                placeholder="Player 2 (e.g., George Kittle)"
+                class="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 px-4"
+                [ngModel]="searchTerm2()"
+                (ngModelChange)="searchTerm2.set($event)"
+                name="searchTerm2">
+          <button type="submit"
+                  aria-label="Search for Player 2"
+                  class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800 disabled:cursor-not-allowed text-white font-bold py-2 px-5 rounded-full transition-colors duration-200 flex items-center justify-center"
+                  [disabled]="isLoading2() || !searchTerm2().trim()">
+            @if (isLoading2()) {
+              <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+            } @else {
+              <span class="md:hidden">P2</span><span class="hidden md:inline">Search</span>
+            }
+          </button>
+        </form>
+      }
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      <div class="xl:col-span-1">
+        <app-controls 
+          [options]="graphicOptions()" 
+          (optionsChange)="updateGraphicOptions($event)"
+          [comparisonMode]="comparisonMode()"
+          (comparisonModeChange)="onComparisonModeChange($event)">
+        </app-controls>
+      </div>
+
+      <div class="xl:col-span-2">
+        <div class="grid grid-cols-1 gap-8" [class.lg:grid-cols-2]="comparisonMode()">
+          <!-- Player 1 Column -->
+          <div class="flex flex-col items-center justify-start p-4 bg-gray-800/50 rounded-lg min-h-[600px]" [class.lg:col-span-2]="!comparisonMode()">
+            @if (isLoading1()) {
+              <div role="status" class="flex-grow flex items-center justify-center text-center">
+                <div>
+                  <i class="fas fa-football fa-spin fa-3x text-indigo-400" aria-hidden="true"></i>
+                  <p class="mt-4 text-gray-400">Fetching Player 1 data...</p>
+                </div>
+              </div>
+            } @else if (error1()) {
+              <div role="alert" class="flex-grow flex items-center justify-center text-center p-8 bg-red-900/20 border border-red-500 rounded-lg">
+                <div>
+                  <i class="fas fa-exclamation-triangle fa-3x text-red-400" aria-hidden="true"></i>
+                  <p class="mt-4 text-xl font-semibold text-red-300">{{ error1() }}</p>
+                </div>
+              </div>
+            } @else if (player1(); as p1) {
+              <div class="flex flex-col items-center gap-6 w-full">
+                <div #graphicContainer>
+                  <app-stat-graphic [player]="p1" [options]="graphicOptions()"></app-stat-graphic>
+                </div>
+                <input type="file" #fileInput (change)="onFileSelected($event, 1)" accept="image/*" class="hidden">
+                <div class="flex flex-wrap justify-center gap-4">
+                  <button (click)="triggerFileUpload(1)" 
+                          [disabled]="isUploadingImage1()"
+                          [attr.aria-busy]="isUploadingImage1()"
+                          class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-full transition-colors duration-200 shadow-lg flex items-center gap-2 disabled:bg-gray-700 disabled:cursor-wait">
+                    @if(isUploadingImage1()) {
+                      <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                      <span>Uploading...</span>
+                    } @else {
+                      <i class="fas fa-upload" aria-hidden="true"></i>
+                      <span>Change Image</span>
+                    }
+                  </button>
+                  <button (click)="exportGraphic(1)" 
+                          class="bg-green-600 hover:bg-green-500 disabled:bg-green-800 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-full transition-colors duration-200 shadow-lg flex items-center gap-2"
+                          [disabled]="isExporting1()"
+                          [attr.aria-busy]="isExporting1()">
+                    @if (isExporting1()) {
+                      <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                      <span>Exporting...</span>
+                    } @else {
+                      <i class="fas fa-download" aria-hidden="true"></i>
+                      <span>Export PNG</span>
+                    }
+                  </button>
+                  @if (webShareApiSupported()) {
+                    <button (click)="shareGraphic(1)"
+                            class="bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-full transition-colors duration-200 shadow-lg flex items-center gap-2"
+                            [disabled]="isSharing1()"
+                            [attr.aria-busy]="isSharing1()">
+                      @if (isSharing1()) {
+                        <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                        <span>Sharing...</span>
+                      } @else {
+                        <i class="fas fa-share-alt" aria-hidden="true"></i>
+                        <span>Share</span>
+                      }
+                    </button>
+                  }
+                </div>
+                 <!-- Player 1 Stat Toggles -->
+                <div class="w-full max-w-[350px] mt-4" role="group" aria-labelledby="p1-stats-heading">
+                  <h4 id="p1-stats-heading" class="text-md font-medium text-gray-300 mb-2 border-t border-gray-700 pt-4">Displayed Stats</h4>
+                  <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
+                    @for (stat of p1.stats; track stat.key; let i = $index) {
+                      <label class="flex items-center justify-between bg-gray-700/50 p-2 rounded-md hover:bg-gray-700 transition-colors cursor-pointer">
+                        <span class="text-sm text-gray-200" id="p1-stat-{{i}}">{{ stat.key }}</span>
+                        <input type="checkbox"
+                              class="h-5 w-5 rounded bg-gray-600 border-gray-500 text-indigo-500 focus:ring-indigo-600 focus:ring-offset-gray-800"
+                              [checked]="stat.selected"
+                              (change)="onStatToggle(stat, 1)"
+                              [attr.aria-labelledby]="'p1-stat-' + i">
+                      </label>
+                    }
+                  </div>
+                </div>
+              </div>
+            } @else {
+              <div class="flex-grow flex items-center justify-center text-center">
+                <div>
+                  <i class="fas fa-search fa-3x text-gray-600" aria-hidden="true"></i>
+                  <p class="mt-4 text-gray-400">Search for a player to get started.</p>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Player 2 Column -->
+          @if (comparisonMode()) {
+            <div class="flex flex-col items-center justify-start p-4 bg-gray-800/50 rounded-lg min-h-[600px]">
+              @if (isLoading2()) {
+                <div role="status" class="flex-grow flex items-center justify-center text-center">
+                  <div>
+                    <i class="fas fa-football fa-spin fa-3x text-indigo-400" aria-hidden="true"></i>
+                    <p class="mt-4 text-gray-400">Fetching Player 2 data...</p>
+                  </div>
+                </div>
+              } @else if (error2()) {
+                <div role="alert" class="flex-grow flex items-center justify-center text-center p-8 bg-red-900/20 border border-red-500 rounded-lg">
+                  <div>
+                    <i class="fas fa-exclamation-triangle fa-3x text-red-400" aria-hidden="true"></i>
+                    <p class="mt-4 text-xl font-semibold text-red-300">{{ error2() }}</p>
+                  </div>
+                </div>
+              } @else if (player2(); as p2) {
+                <div class="flex flex-col items-center gap-6 w-full">
+                  <div #graphicContainer>
+                    <app-stat-graphic [player]="p2" [options]="graphicOptions()"></app-stat-graphic>
+                  </div>
+                  <input type="file" #fileInput (change)="onFileSelected($event, 2)" accept="image/*" class="hidden">
+                  <div class="flex flex-wrap justify-center gap-4">
+                    <button (click)="triggerFileUpload(2)" 
+                            [disabled]="isUploadingImage2()"
+                            [attr.aria-busy]="isUploadingImage2()"
+                            class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-full transition-colors duration-200 shadow-lg flex items-center gap-2 disabled:bg-gray-700 disabled:cursor-wait">
+                      @if(isUploadingImage2()) {
+                        <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                        <span>Uploading...</span>
+                      } @else {
+                        <i class="fas fa-upload" aria-hidden="true"></i>
+                        <span>Change Image</span>
+                      }
+                    </button>
+                    <button (click)="exportGraphic(2)" 
+                            class="bg-green-600 hover:bg-green-500 disabled:bg-green-800 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-full transition-colors duration-200 shadow-lg flex items-center gap-2"
+                            [disabled]="isExporting2()"
+                            [attr.aria-busy]="isExporting2()">
+                      @if (isExporting2()) {
+                        <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                        <span>Exporting...</span>
+                      } @else {
+                        <i class="fas fa-download" aria-hidden="true"></i>
+                        <span>Export PNG</span>
+                      }
+                    </button>
+                    @if (webShareApiSupported()) {
+                      <button (click)="shareGraphic(2)"
+                              class="bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-full transition-colors duration-200 shadow-lg flex items-center gap-2"
+                              [disabled]="isSharing2()"
+                              [attr.aria-busy]="isSharing2()">
+                        @if (isSharing2()) {
+                          <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                          <span>Sharing...</span>
+                        } @else {
+                          <i class="fas fa-share-alt" aria-hidden="true"></i>
+                          <span>Share</span>
+                        }
+                      </button>
+                    }
+                  </div>
+                  <!-- Player 2 Stat Toggles -->
+                  <div class="w-full max-w-[350px] mt-4" role="group" aria-labelledby="p2-stats-heading">
+                    <h4 id="p2-stats-heading" class="text-md font-medium text-gray-300 mb-2 border-t border-gray-700 pt-4">Displayed Stats</h4>
+                    <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
+                      @for (stat of p2.stats; track stat.key; let i = $index) {
+                        <label class="flex items-center justify-between bg-gray-700/50 p-2 rounded-md hover:bg-gray-700 transition-colors cursor-pointer">
+                          <span class="text-sm text-gray-200" id="p2-stat-{{i}}">{{ stat.key }}</span>
+                          <input type="checkbox"
+                                class="h-5 w-5 rounded bg-gray-600 border-gray-500 text-indigo-500 focus:ring-indigo-600 focus:ring-offset-gray-800"
+                                [checked]="stat.selected"
+                                (change)="onStatToggle(stat, 2)"
+                                [attr.aria-labelledby]="'p2-stat-' + i">
+                        </label>
+                      }
+                    </div>
+                  </div>
+                </div>
+              } @else {
+                <div class="flex-grow flex items-center justify-center text-center">
+                  <div>
+                    <i class="fas fa-search fa-3x text-gray-600" aria-hidden="true"></i>
+                    <p class="mt-4 text-gray-400">Search for a player to get started.</p>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</main>

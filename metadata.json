@@ -1,0 +1,5 @@
+{
+  "name": "NFL Player Stat Graphic Generator",
+  "description": "An application to generate and customize shareable graphics for NFL player game stats. Compare two players side-by-side, tweak the design, and export your custom stat cards.",
+  "requestFramePermissions": []
+}

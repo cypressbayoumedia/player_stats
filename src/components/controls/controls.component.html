@@ -1,0 +1,61 @@
+<div class="p-6 bg-gray-800 rounded-lg shadow-lg" role="region" aria-labelledby="controls-heading">
+  <div class="flex items-center justify-between mb-6 border-b border-gray-700 pb-4">
+    <label for="comparison-toggle" class="font-medium text-gray-300">Player Comparison</label>
+    <label class="relative inline-flex items-center cursor-pointer">
+      <input type="checkbox" id="comparison-toggle" class="sr-only peer" 
+             [checked]="comparisonMode()" 
+             (change)="onComparisonToggle($event)">
+      <div class="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-indigo-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+    </label>
+  </div>
+
+  <h3 id="controls-heading" class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">Customize Graphic</h3>
+  <div class="space-y-6">
+    <div>
+      <label for="template" class="block text-sm font-medium text-gray-300 mb-2">Template</label>
+      <select id="template"
+              class="w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-white"
+              [value]="options().template"
+              (change)="onTemplateChange($event)">
+        <option value="modern">Modern</option>
+        <option value="classic">Classic</option>
+        <option value="vintage">Vintage</option>
+      </select>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label for="backgroundColor" class="block text-sm font-medium text-gray-300 mb-2">Background</label>
+        <input type="color"
+               id="backgroundColor"
+               class="p-1 h-10 w-full block bg-gray-700 border border-gray-600 cursor-pointer rounded-lg disabled:opacity-50 disabled:pointer-events-none"
+               [value]="options().backgroundColor"
+               (input)="onColorChange($event, 'backgroundColor')">
+      </div>
+       <div>
+        <label for="accentColor" class="block text-sm font-medium text-gray-300 mb-2">Accent</label>
+        <input type="color"
+               id="accentColor"
+               class="p-1 h-10 w-full block bg-gray-700 border border-gray-600 cursor-pointer rounded-lg disabled:opacity-50 disabled:pointer-events-none"
+               [value]="options().accentColor"
+               (input)="onColorChange($event, 'accentColor')">
+      </div>
+      <div>
+        <label for="primaryTextColor" class="block text-sm font-medium text-gray-300 mb-2">Primary Text</label>
+        <input type="color"
+               id="primaryTextColor"
+               class="p-1 h-10 w-full block bg-gray-700 border border-gray-600 cursor-pointer rounded-lg disabled:opacity-50 disabled:pointer-events-none"
+               [value]="options().primaryTextColor"
+               (input)="onColorChange($event, 'primaryTextColor')">
+      </div>
+      <div>
+        <label for="secondaryTextColor" class="block text-sm font-medium text-gray-300 mb-2">Secondary Text</label>
+        <input type="color"
+               id="secondaryTextColor"
+               class="p-1 h-10 w-full block bg-gray-700 border border-gray-600 cursor-pointer rounded-lg disabled:opacity-50 disabled:pointer-events-none"
+               [value]="options().secondaryTextColor"
+               (input)="onColorChange($event, 'secondaryTextColor')">
+      </div>
+    </div>
+  </div>
+</div>
