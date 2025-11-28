@@ -31,8 +31,7 @@
                aria-label="Player 1 Name"
                placeholder="Player 1 (e.g., Travis Kelce)"
                class="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 px-4"
-               [ngModel]="searchTerm1()"
-               (ngModelChange)="searchTerm1.set($event)"
+               [(ngModel)]="searchTerm1"
                name="searchTerm1">
         <button type="submit"
                 aria-label="Search for Player 1"
@@ -54,8 +53,7 @@
                 aria-label="Player 2 Name"
                 placeholder="Player 2 (e.g., George Kittle)"
                 class="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 px-4"
-                [ngModel]="searchTerm2()"
-                (ngModelChange)="searchTerm2.set($event)"
+                [(ngModel)]="searchTerm2"
                 name="searchTerm2">
           <button type="submit"
                   aria-label="Search for Player 2"
@@ -74,10 +72,8 @@
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
       <div class="xl:col-span-1">
         <app-controls 
-          [options]="graphicOptions()" 
-          (optionsChange)="updateGraphicOptions($event)"
-          [comparisonMode]="comparisonMode()"
-          (comparisonModeChange)="onComparisonModeChange($event)"
+          [(options)]="graphicOptions"
+          [(comparisonMode)]="comparisonMode"
           [favoritePlayers]="favoritePlayers()"
           (favoriteSelect)="selectFavorite($event)">
         </app-controls>
@@ -112,7 +108,13 @@
                     </button>
                 </div>
                 <div #graphicContainer>
-                  <app-stat-graphic [player]="p1" [options]="graphicOptions()"></app-stat-graphic>
+                   @defer {
+                    <app-stat-graphic [player]="p1" [options]="graphicOptions()"></app-stat-graphic>
+                  } @placeholder {
+                    <div class="w-[350px] h-[500px] bg-gray-700/50 rounded-2xl flex items-center justify-center animate-pulse">
+                      <i class="fas fa-image fa-3x text-gray-500"></i>
+                    </div>
+                  }
                 </div>
                 <input type="file" #fileInput (change)="onFileSelected($event, 1)" accept="image/*" class="hidden">
                 <div class="flex flex-wrap justify-center gap-4">
@@ -210,7 +212,13 @@
                     </button>
                   </div>
                   <div #graphicContainer>
-                    <app-stat-graphic [player]="p2" [options]="graphicOptions()"></app-stat-graphic>
+                    @defer {
+                      <app-stat-graphic [player]="p2" [options]="graphicOptions()"></app-stat-graphic>
+                    } @placeholder {
+                      <div class="w-[350px] h-[500px] bg-gray-700/50 rounded-2xl flex items-center justify-center animate-pulse">
+                        <i class="fas fa-image fa-3x text-gray-500"></i>
+                      </div>
+                    }
                   </div>
                   <input type="file" #fileInput (change)="onFileSelected($event, 2)" accept="image/*" class="hidden">
                   <div class="flex flex-wrap justify-center gap-4">

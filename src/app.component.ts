@@ -99,6 +99,23 @@ export class AppComponent {
       localStorage.setItem('nfl-stats-favorite-players', JSON.stringify(this.favoritePlayers()));
     });
 
+    // Effect to save graphic options to local storage whenever they change
+    effect(() => {
+      localStorage.setItem('nfl-stats-graphic-options', JSON.stringify(this.graphicOptions()));
+    });
+
+    // Effect to handle logic when comparison mode changes
+    effect(() => {
+      const enabled = this.comparisonMode();
+      if (enabled && !this.player2() && this.searchTerm2()) {
+        this.searchPlayer(2);
+      } else if (!enabled) {
+        this.player2.set(null);
+        this.error2.set(null);
+        this.searchTerm2.set('');
+      }
+    });
+
 
     // Check for Web Share API support
     if (navigator.share) {
@@ -109,19 +126,6 @@ export class AppComponent {
   dismissInstructions() {
     this.showInstructions.set(false);
     localStorage.setItem('nfl-stats-instructions-dismissed', 'true');
-  }
-
-  onComparisonModeChange(enabled: boolean) {
-    this.comparisonMode.set(enabled);
-    if (enabled && !this.player2() && this.searchTerm2()) {
-      // If comparison is turned on and player 2 has no data but has a search term, fetch it.
-      this.searchPlayer(2);
-    } else if (!enabled) {
-      // If comparison is turned off, clear player 2 data for a clean state.
-      this.player2.set(null);
-      this.error2.set(null);
-      this.searchTerm2.set('');
-    }
   }
 
   searchPlayer(playerIndex: 1 | 2) {
@@ -156,11 +160,6 @@ export class AppComponent {
   handleSearch(event: Event, playerIndex: 1 | 2) {
       event.preventDefault();
       this.searchPlayer(playerIndex);
-  }
-
-  updateGraphicOptions(newOptions: GraphicOptions) {
-    this.graphicOptions.set(newOptions);
-    localStorage.setItem('nfl-stats-graphic-options', JSON.stringify(newOptions));
   }
 
   onStatsChanged(newStats: Stat[], playerIndex: 1 | 2) {
