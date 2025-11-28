@@ -9,6 +9,23 @@
     </label>
   </div>
 
+  @if (favoritePlayers().length > 0) {
+    <div class="mb-6 border-b border-gray-700 pb-4">
+      <h3 class="text-lg font-semibold text-gray-200 mb-3">Favorite Players</h3>
+      <div class="space-y-2 max-h-40 overflow-y-auto pr-2">
+        @for (player of favoritePlayers(); track player) {
+          <div class="flex items-center justify-between bg-gray-700/50 p-2 rounded-md">
+            <span class="text-sm font-medium text-gray-200 truncate">{{ player }}</span>
+            <div class="flex gap-2">
+              <button (click)="onFavoriteSelect(player, 1)" title="Load {{player}} as Player 1" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-1 px-2 rounded-md transition-colors">P1</button>
+              <button (click)="onFavoriteSelect(player, 2)" title="Load {{player}} as Player 2" [disabled]="!comparisonMode()" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-1 px-2 rounded-md transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">P2</button>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
   <h3 id="controls-heading" class="text-xl font-bold mb-4 border-b border-gray-700 pb-2">Customize Graphic</h3>
   <div class="space-y-6">
     <div>
@@ -20,6 +37,9 @@
         <option value="modern">Modern</option>
         <option value="classic">Classic</option>
         <option value="vintage">Vintage</option>
+        <option value="spotlight">Spotlight</option>
+        <option value="newspaper">Newspaper</option>
+        <option value="team-first">Team-First</option>
       </select>
     </div>
 

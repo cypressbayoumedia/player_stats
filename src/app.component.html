@@ -40,6 +40,8 @@
                 [disabled]="isLoading1() || !searchTerm1().trim()">
           @if (isLoading1()) {
             <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+          } @else if (!comparisonMode() && !player1()) {
+            <i class="fas fa-search" aria-hidden="true"></i>
           } @else {
              <span class="md:hidden">P1</span><span class="hidden md:inline">Search</span>
           }
@@ -75,7 +77,9 @@
           [options]="graphicOptions()" 
           (optionsChange)="updateGraphicOptions($event)"
           [comparisonMode]="comparisonMode()"
-          (comparisonModeChange)="onComparisonModeChange($event)">
+          (comparisonModeChange)="onComparisonModeChange($event)"
+          [favoritePlayers]="favoritePlayers()"
+          (favoriteSelect)="selectFavorite($event)">
         </app-controls>
       </div>
 
@@ -87,7 +91,7 @@
               <div role="status" class="flex-grow flex items-center justify-center text-center">
                 <div>
                   <i class="fas fa-football fa-spin fa-3x text-indigo-400" aria-hidden="true"></i>
-                  <p class="mt-4 text-gray-400">Fetching Player 1 data...</p>
+                  <p class="mt-4 text-gray-400">Fetching {{ searchTerm1() }} stats...</p>
                 </div>
               </div>
             } @else if (error1()) {
@@ -99,6 +103,14 @@
               </div>
             } @else if (player1(); as p1) {
               <div class="flex flex-col items-center gap-6 w-full">
+                <div class="flex items-center justify-center gap-4 w-full max-w-[350px]">
+                    <h3 class="text-xl font-bold text-center truncate text-white" title="{{p1.name}}">{{ p1.name }}</h3>
+                    <button (click)="toggleFavorite(1)"
+                            [attr.aria-label]="isFavorite1() ? 'Remove ' + p1.name + ' from Favorites' : 'Add ' + p1.name + ' to Favorites'"
+                            class="text-gray-400 hover:text-yellow-400 focus:outline-none focus:text-yellow-400 transition-colors text-2xl">
+                        <i class="fa-star" [class.fas]="isFavorite1()" [class.far]="!isFavorite1()" [class.text-yellow-400]="isFavorite1()"></i>
+                    </button>
+                </div>
                 <div #graphicContainer>
                   <app-stat-graphic [player]="p1" [options]="graphicOptions()"></app-stat-graphic>
                 </div>
@@ -177,7 +189,7 @@
                 <div role="status" class="flex-grow flex items-center justify-center text-center">
                   <div>
                     <i class="fas fa-football fa-spin fa-3x text-indigo-400" aria-hidden="true"></i>
-                    <p class="mt-4 text-gray-400">Fetching Player 2 data...</p>
+                    <p class="mt-4 text-gray-400">Fetching {{ searchTerm2() }} stats...</p>
                   </div>
                 </div>
               } @else if (error2()) {
@@ -189,6 +201,14 @@
                 </div>
               } @else if (player2(); as p2) {
                 <div class="flex flex-col items-center gap-6 w-full">
+                  <div class="flex items-center justify-center gap-4 w-full max-w-[350px]">
+                    <h3 class="text-xl font-bold text-center truncate text-white" title="{{p2.name}}">{{ p2.name }}</h3>
+                    <button (click)="toggleFavorite(2)"
+                            [attr.aria-label]="isFavorite2() ? 'Remove ' + p2.name + ' from Favorites' : 'Add ' + p2.name + ' to Favorites'"
+                            class="text-gray-400 hover:text-yellow-400 focus:outline-none focus:text-yellow-400 transition-colors text-2xl">
+                        <i class="fa-star" [class.fas]="isFavorite2()" [class.far]="!isFavorite2()" [class.text-yellow-400]="isFavorite2()"></i>
+                    </button>
+                  </div>
                   <div #graphicContainer>
                     <app-stat-graphic [player]="p2" [options]="graphicOptions()"></app-stat-graphic>
                   </div>

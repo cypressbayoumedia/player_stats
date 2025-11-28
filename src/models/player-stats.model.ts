@@ -15,7 +15,7 @@ export interface PlayerStats {
 }
 
 export interface GraphicOptions {
-  template: 'modern' | 'classic' | 'vintage';
+  template: 'modern' | 'classic' | 'vintage' | 'spotlight' | 'newspaper' | 'team-first';
   backgroundColor: string;
   primaryTextColor: string;
   secondaryTextColor: string;

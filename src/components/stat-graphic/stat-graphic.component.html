@@ -1,7 +1,7 @@
 @if (player(); as p) {
   <div class="w-[350px] h-[500px] shadow-2xl rounded-2xl overflow-hidden font-mono"
-       [style.background-color]="options().backgroundColor"
-       [style.color]="options().primaryTextColor">
+       [style.background-color]="options().template === 'newspaper' ? '#F1EAD9' : options().backgroundColor"
+       [style.color]="options().template === 'newspaper' ? '#3C3C3C' : options().primaryTextColor">
 
     @switch (options().template) {
       @case ('modern') {
@@ -108,6 +108,108 @@
               }
             </div>
          </div>
+      }
+      @case ('spotlight') {
+        <div class="relative w-full h-full flex flex-col items-center justify-center p-4 overflow-hidden">
+          <div class="relative mb-4">
+            @if (!playerImageError()) {
+              <img [src]="p.playerImageUrl" (error)="playerImageError.set(true)" alt="{{p.name}}" loading="lazy" class="relative z-10 w-48 h-48 rounded-full object-cover border-2" [style.border-color]="options().accentColor" />
+              <div class="absolute -inset-1 rounded-full blur-xl animate-pulse" [style.background-color]="options().accentColor" style="opacity: 0.7;"></div>
+            } @else {
+              <div class="relative z-10 w-48 h-48 rounded-full bg-gray-700 flex items-center justify-center border-2" [style.border-color]="options().accentColor">
+                <i class="fas fa-user-alt-slash fa-5x text-gray-500"></i>
+              </div>
+            }
+          </div>
+          <div class="relative z-10 text-center">
+            <h2 class="text-4xl font-black uppercase tracking-wider" [style.color]="options().primaryTextColor">{{ p.name }}</h2>
+            <p class="text-md uppercase" [style.color]="options().secondaryTextColor">{{ p.position }} | {{ p.team }}</p>
+             @if (p.opponent) {
+              <p class="text-sm" [style.color]="options().secondaryTextColor">vs. {{ p.opponent }}</p>
+            }
+          </div>
+          <div class="relative z-10 grid grid-cols-3 gap-x-8 gap-y-4 mt-8 text-center">
+            @for(stat of p.stats | selectedStats; track stat.key) {
+              <div>
+                <p class="text-3xl font-bold" [style.color]="options().accentColor">{{ stat.value }}</p>
+                <p class="text-xs uppercase" [style.color]="options().secondaryTextColor">{{ stat.key }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      }
+      @case ('newspaper') {
+        <div class="w-full h-full flex flex-col p-6 font-serif border-8" style="font-family: 'Times New Roman', serif; border-color: #DBCDBA;">
+          <div class="text-center border-b-4 border-double pb-3 mb-4" [style.border-color]="'#3C3C3C'">
+            <h2 class="text-4xl font-black uppercase">The Daily Stat</h2>
+          </div>
+          <div class="flex items-start gap-4 mb-4">
+            @if (!playerImageError()) {
+              <img [src]="p.playerImageUrl" (error)="playerImageError.set(true)" alt="{{p.name}}" loading="lazy" class="w-28 h-28 object-cover border-2 p-1" style="border-color: #3C3C3C50; filter: sepia(0.5) contrast(0.9) grayscale(0.1);" />
+            } @else {
+              <div class="w-28 h-28 border-2 bg-gray-200 flex items-center justify-center" style="border-color: #3C3C3C50;">
+                <i class="fas fa-user-alt-slash fa-3x text-gray-500"></i>
+              </div>
+            }
+            <div>
+              <h3 class="text-3xl font-bold">{{ p.name }}</h3>
+              <p class="text-sm font-semibold">{{ p.position }} | {{ p.team }}</p>
+              @if (p.opponent) {
+                <p class="text-xs italic mt-1">In last game vs. {{ p.opponent }}</p>
+              }
+            </div>
+          </div>
+          <div class="flex-grow grid grid-cols-2 gap-x-6 gap-y-2 border-t pt-4" [style.border-color]="'#3C3C3C'">
+            @for(stat of p.stats | selectedStats; track stat.key) {
+              <div class="flex justify-between items-baseline border-b border-dotted" [style.border-color]="'#3C3C3C' + '80'">
+                <span class="text-sm font-semibold">{{ stat.key }}</span>
+                <span class="text-lg font-bold">{{ stat.value }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+      @case ('team-first') {
+        <div class="relative w-full h-full flex flex-col justify-between p-4 overflow-hidden border-4" [style.border-color]="options().accentColor + '80'">
+           @if (!teamLogoError()) {
+            <img [src]="p.teamLogoUrl" (error)="teamLogoError.set(true)" loading="lazy" alt="{{p.team}} Background" class="absolute inset-0 w-full h-full object-contain blur-lg opacity-10 scale-125" />
+           }
+          <div class="relative z-10 flex items-start justify-between">
+            <div>
+              <h2 class="text-3xl font-extrabold leading-tight">{{ p.name }}</h2>
+              <p class="text-sm" [style.color]="options().secondaryTextColor">{{ p.position }} | {{ p.team }}</p>
+               @if (p.opponent) {
+                <p class="text-xs" [style.color]="options().secondaryTextColor">vs. {{ p.opponent }}</p>
+              }
+            </div>
+            @if (!teamLogoError()) {
+              <img [src]="p.teamLogoUrl" (error)="teamLogoError.set(true)" loading="lazy" alt="{{p.team}} Logo" class="w-16 h-16 object-contain" />
+            } @else {
+              <div class="w-16 h-16 flex items-center justify-center bg-gray-600 rounded-md">
+                  <i class="fas fa-shield-alt text-3xl text-gray-400"></i>
+              </div>
+            }
+          </div>
+
+          <div class="relative z-10 flex-grow flex items-center justify-center my-2">
+            @if (!playerImageError()) {
+              <img [src]="p.playerImageUrl" (error)="playerImageError.set(true)" alt="{{p.name}}" loading="lazy" class="max-w-[80%] max-h-[240px] object-contain" [style.filter]="'drop-shadow(4px 4px 8px rgba(0,0,0,0.5))'"/>
+            } @else {
+               <div class="w-48 h-48 bg-gray-700/50 flex items-center justify-center rounded-lg">
+                <i class="fas fa-user-alt-slash fa-5x text-gray-500"></i>
+              </div>
+            }
+          </div>
+          
+          <div class="relative z-10 grid grid-cols-3 gap-2 text-center bg-black/30 backdrop-blur-sm p-3 rounded-lg border" [style.border-color]="options().accentColor + '40'">
+            @for(stat of p.stats | selectedStats; track stat.key) {
+              <div>
+                <p class="text-xl font-bold" [style.color]="options().accentColor">{{ stat.value }}</p>
+                <p class="text-[10px] uppercase" [style.color]="options().secondaryTextColor">{{ stat.key }}</p>
+              </div>
+            }
+          </div>
+        </div>
       }
     }
   </div>

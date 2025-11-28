@@ -14,6 +14,9 @@ export class ControlsComponent {
   optionsChange = output<GraphicOptions>();
   comparisonMode = input.required<boolean>();
   comparisonModeChange = output<boolean>();
+  favoritePlayers = input.required<string[]>();
+  favoriteSelect = output<{ playerName: string, playerIndex: 1 | 2 }>();
+
 
   onComparisonToggle(event: Event) {
     this.comparisonModeChange.emit((event.target as HTMLInputElement).checked);
@@ -27,5 +30,9 @@ export class ControlsComponent {
   onColorChange(event: Event, property: keyof GraphicOptions) {
     const newColor = (event.target as HTMLInputElement).value;
     this.optionsChange.emit({ ...this.options(), [property]: newColor });
+  }
+
+  onFavoriteSelect(playerName: string, playerIndex: 1 | 2) {
+    this.favoriteSelect.emit({ playerName, playerIndex });
   }
 }

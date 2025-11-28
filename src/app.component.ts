@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, inject, ElementRef, ViewChild, QueryList, ViewChildren } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, ElementRef, QueryList, ViewChildren, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NflDataService } from './services/nfl-data.service';
 import { PlayerStats, GraphicOptions, Stat } from './models/player-stats.model';
@@ -52,12 +52,55 @@ export class AppComponent {
     secondaryTextColor: '#9CA3AF',
     accentColor: '#3B82F6',
   });
+  favoritePlayers = signal<string[]>([]);
+
+  // Computed State for Favorites
+  isFavorite1 = computed(() => {
+    const p1 = this.player1();
+    return p1 ? this.favoritePlayers().includes(p1.name) : false;
+  });
+  isFavorite2 = computed(() => {
+    const p2 = this.player2();
+    return p2 ? this.favoritePlayers().includes(p2.name) : false;
+  });
 
   constructor() {
+    // Load instructions dismissal state
     const instructionsDismissed = localStorage.getItem('nfl-stats-instructions-dismissed');
     if (instructionsDismissed === 'true') {
       this.showInstructions.set(false);
     }
+
+    // Load saved graphic options
+    const savedOptions = localStorage.getItem('nfl-stats-graphic-options');
+    if (savedOptions) {
+      try {
+        const parsedOptions: GraphicOptions = JSON.parse(savedOptions);
+        this.graphicOptions.set(parsedOptions);
+      } catch (e) {
+        console.error('Failed to parse graphic options from local storage', e);
+        localStorage.removeItem('nfl-stats-graphic-options');
+      }
+    }
+    
+    // Load favorite players
+    const savedFavorites = localStorage.getItem('nfl-stats-favorite-players');
+    if (savedFavorites) {
+      try {
+        this.favoritePlayers.set(JSON.parse(savedFavorites));
+      } catch (e) {
+        console.error('Failed to parse favorite players from local storage', e);
+        localStorage.removeItem('nfl-stats-favorite-players');
+      }
+    }
+
+    // Effect to save favorites to local storage whenever they change
+    effect(() => {
+      localStorage.setItem('nfl-stats-favorite-players', JSON.stringify(this.favoritePlayers()));
+    });
+
+
+    // Check for Web Share API support
     if (navigator.share) {
       this.webShareApiSupported.set(true);
     }
@@ -117,6 +160,7 @@ export class AppComponent {
 
   updateGraphicOptions(newOptions: GraphicOptions) {
     this.graphicOptions.set(newOptions);
+    localStorage.setItem('nfl-stats-graphic-options', JSON.stringify(newOptions));
   }
 
   onStatsChanged(newStats: Stat[], playerIndex: 1 | 2) {
@@ -135,6 +179,29 @@ export class AppComponent {
       );
       this.onStatsChanged(newStats, playerIndex);
     }
+  }
+
+  toggleFavorite(playerIndex: 1 | 2) {
+    const player = playerIndex === 1 ? this.player1() : this.player2();
+    if (!player) return;
+
+    const playerName = player.name;
+    this.favoritePlayers.update(favorites => {
+      if (favorites.includes(playerName)) {
+        return favorites.filter(name => name !== playerName);
+      } else {
+        return [...favorites, playerName].sort();
+      }
+    });
+  }
+
+  selectFavorite({ playerName, playerIndex }: { playerName: string, playerIndex: 1 | 2 }) {
+    if (playerIndex === 1) {
+      this.searchTerm1.set(playerName);
+    } else {
+      this.searchTerm2.set(playerName);
+    }
+    this.searchPlayer(playerIndex);
   }
 
   triggerFileUpload(playerIndex: 1 | 2) {
