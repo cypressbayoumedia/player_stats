@@ -12,12 +12,12 @@ export class NflDataService {
   private geminiService = inject(GeminiService);
   private teamLogoService = inject(TeamLogoService);
 
-  getPlayerStats(name: string): Observable<PlayerStats | null> {
+  getPlayerStats(name: string, mode: 'weekly' | 'season', week?: number): Observable<PlayerStats | null> {
     if (!name.trim()) {
       return of(null);
     }
     // Convert promise from GeminiService to an observable
-    return from(this.geminiService.getPlayerStats(name)).pipe(
+    return from(this.geminiService.getPlayerStats(name, mode, week)).pipe(
       map(player => {
         if (player) {
           player.teamLogoUrl = this.teamLogoService.getLogoUrl(player.team);

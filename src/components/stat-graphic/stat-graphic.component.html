@@ -1,5 +1,5 @@
 @if (player(); as p) {
-  <div class="w-[350px] h-[500px] shadow-2xl rounded-2xl overflow-hidden font-mono"
+  <div class="w-full max-w-[350px] h-[500px] shadow-2xl rounded-2xl overflow-hidden font-mono"
        [style.background-color]="options().template === 'newspaper' ? '#F1EAD9' : options().backgroundColor"
        [style.color]="options().template === 'newspaper' ? '#3C3C3C' : options().primaryTextColor">
 
@@ -26,12 +26,15 @@
               <div>
                 <h2 class="text-3xl font-extrabold leading-tight">{{ p.name }}</h2>
                 <p class="text-xs uppercase" [style.color]="options().secondaryTextColor">{{ p.position }} | {{ p.team }}{{ p.opponent ? ' | vs. ' + p.opponent : '' }}</p>
+                @if (p.statType === 'weekly') {
+                  <p class="text-xs font-bold" [style.color]="options().accentColor">{{ p.didStart ? '(Starter)' : '(Reserve)' }}</p>
+                }
               </div>
             </div>
             <div class="grid grid-cols-3 gap-3 text-center border-t pt-3" [style.border-color]="options().accentColor + '80'">
               @for(stat of p.stats | selectedStats; track stat.key) {
-                <div>
-                  <p class="text-2xl font-bold" [style.color]="options().accentColor">{{ stat.value }}</p>
+                <div (click)="onStatClick(stat)" class="cursor-pointer transition-transform duration-150 ease-in-out active:scale-95">
+                  <p class="text-2xl font-bold" [style.color]="stat.isHighlighted ? options().accentColor : options().primaryTextColor">{{ stat.value }}</p>
                   <p class="text-xs uppercase" [style.color]="options().secondaryTextColor">{{ stat.key }}</p>
                 </div>
               }
@@ -64,7 +67,11 @@
                 }
                  <div>
                     <p class="font-bold text-lg leading-tight" [style.color]="options().primaryTextColor">{{ p.name }}</p>
-                    <p class="text-sm" [style.color]="options().secondaryTextColor">{{ p.position }} | {{ p.team }}</p>
+                    <p class="text-sm" [style.color]="options().secondaryTextColor">{{ p.position }} | {{ p.team }}
+                      @if (p.statType === 'weekly') {
+                        <span class="font-bold" [style.color]="options().accentColor">{{ p.didStart ? ' (Starter)' : ' (Reserve)' }}</span>
+                      }
+                    </p>
                     @if(p.opponent) {
                         <p class="text-xs" [style.color]="options().secondaryTextColor">Last Game vs. {{ p.opponent }}</p>
                     }
@@ -72,8 +79,8 @@
             </div>
             <div class="grid grid-cols-3 gap-2 text-center">
               @for(stat of p.stats | selectedStats; track stat.key) {
-                <div class="p-2 rounded" [style.background-color]="options().accentColor + '20'">
-                  <p class="text-xl font-bold" [style.color]="options().primaryTextColor">{{ stat.value }}</p>
+                <div (click)="onStatClick(stat)" class="p-2 rounded cursor-pointer transition-transform duration-150 ease-in-out active:scale-95" [style.background-color]="options().accentColor + '20'">
+                  <p class="text-xl font-bold" [style.color]="stat.isHighlighted ? options().accentColor : options().primaryTextColor">{{ stat.value }}</p>
                   <p class="text-xs uppercase" [style.color]="options().secondaryTextColor">{{ stat.key }}</p>
                 </div>
               }
@@ -84,8 +91,11 @@
       @case ('vintage') {
          <div class="w-full h-full flex flex-col p-5 border-4" [style.border-color]="options().accentColor">
             <div class="text-center mb-4">
-                 <h2 class="text-4xl font-extrabold">{{ p.name }}</h2>
+                 <h2 class="text-4xl sm:text-3xl font-extrabold">{{ p.name }}</h2>
                  <p class="text-lg" [style.color]="options().secondaryTextColor">{{ p.position }} - {{ p.team }}</p>
+                 @if (p.statType === 'weekly') {
+                    <p class="text-sm font-bold" [style.color]="options().accentColor">{{ p.didStart ? '(Starter)' : '(Reserve)' }}</p>
+                 }
                  @if (p.opponent) {
                     <p class="text-sm" [style.color]="options().secondaryTextColor">vs. {{ p.opponent }}</p>
                 }
@@ -101,8 +111,8 @@
             </div>
             <div class="grid grid-cols-5 gap-2 text-center">
                @for(stat of p.stats | selectedStats; track stat.key) {
-                <div>
-                  <p class="text-xl font-bold" [style.color]="options().accentColor">{{ stat.value }}</p>
+                <div (click)="onStatClick(stat)" class="cursor-pointer transition-transform duration-150 ease-in-out active:scale-95">
+                  <p class="text-xl font-bold" [style.color]="stat.isHighlighted ? options().accentColor : options().primaryTextColor">{{ stat.value }}</p>
                   <p class="text-[10px] uppercase font-semibold" [style.color]="options().secondaryTextColor">{{ stat.key }}</p>
                 </div>
               }
@@ -122,16 +132,19 @@
             }
           </div>
           <div class="relative z-10 text-center">
-            <h2 class="text-4xl font-black uppercase tracking-wider" [style.color]="options().primaryTextColor">{{ p.name }}</h2>
+            <h2 class="text-4xl sm:text-3xl font-black uppercase tracking-wider" [style.color]="options().primaryTextColor">{{ p.name }}</h2>
             <p class="text-md uppercase" [style.color]="options().secondaryTextColor">{{ p.position }} | {{ p.team }}</p>
+             @if (p.statType === 'weekly') {
+              <p class="text-sm font-bold" [style.color]="options().accentColor">{{ p.didStart ? '(Starter)' : '(Reserve)' }}</p>
+            }
              @if (p.opponent) {
               <p class="text-sm" [style.color]="options().secondaryTextColor">vs. {{ p.opponent }}</p>
             }
           </div>
           <div class="relative z-10 grid grid-cols-3 gap-x-8 gap-y-4 mt-8 text-center">
             @for(stat of p.stats | selectedStats; track stat.key) {
-              <div>
-                <p class="text-3xl font-bold" [style.color]="options().accentColor">{{ stat.value }}</p>
+              <div (click)="onStatClick(stat)" class="cursor-pointer transition-transform duration-150 ease-in-out active:scale-95">
+                <p class="text-3xl font-bold" [style.color]="stat.isHighlighted ? options().accentColor : options().primaryTextColor">{{ stat.value }}</p>
                 <p class="text-xs uppercase" [style.color]="options().secondaryTextColor">{{ stat.key }}</p>
               </div>
             }
@@ -141,7 +154,7 @@
       @case ('newspaper') {
         <div class="w-full h-full flex flex-col p-6 font-serif border-8" style="font-family: 'Times New Roman', serif; border-color: #DBCDBA;">
           <div class="text-center border-b-4 border-double pb-3 mb-4" [style.border-color]="'#3C3C3C'">
-            <h2 class="text-4xl font-black uppercase">The Daily Stat</h2>
+            <h2 class="text-4xl sm:text-3xl font-black uppercase">The Daily Stat</h2>
           </div>
           <div class="flex items-start gap-4 mb-4">
             @if (!playerImageError()) {
@@ -153,7 +166,11 @@
             }
             <div>
               <h3 class="text-3xl font-bold">{{ p.name }}</h3>
-              <p class="text-sm font-semibold">{{ p.position }} | {{ p.team }}</p>
+              <p class="text-sm font-semibold">{{ p.position }} | {{ p.team }}
+                @if (p.statType === 'weekly') {
+                  <span class="font-bold" [style.color]="options().accentColor">{{ p.didStart ? ' (Starter)' : ' (Reserve)' }}</span>
+                }
+              </p>
               @if (p.opponent) {
                 <p class="text-xs italic mt-1">In last game vs. {{ p.opponent }}</p>
               }
@@ -161,9 +178,9 @@
           </div>
           <div class="flex-grow grid grid-cols-2 gap-x-6 gap-y-2 border-t pt-4" [style.border-color]="'#3C3C3C'">
             @for(stat of p.stats | selectedStats; track stat.key) {
-              <div class="flex justify-between items-baseline border-b border-dotted" [style.border-color]="'#3C3C3C' + '80'">
+              <div (click)="onStatClick(stat)" class="flex justify-between items-baseline border-b border-dotted cursor-pointer transition-transform duration-150 ease-in-out active:scale-95" [style.border-color]="'#3C3C3C' + '80'">
                 <span class="text-sm font-semibold">{{ stat.key }}</span>
-                <span class="text-lg font-bold">{{ stat.value }}</span>
+                <span class="text-lg font-bold" [style.color]="stat.isHighlighted ? options().accentColor : options().primaryTextColor">{{ stat.value }}</span>
               </div>
             }
           </div>
@@ -177,7 +194,11 @@
           <div class="relative z-10 flex items-start justify-between">
             <div>
               <h2 class="text-3xl font-extrabold leading-tight">{{ p.name }}</h2>
-              <p class="text-sm" [style.color]="options().secondaryTextColor">{{ p.position }} | {{ p.team }}</p>
+              <p class="text-sm" [style.color]="options().secondaryTextColor">{{ p.position }} | {{ p.team }}
+                @if (p.statType === 'weekly') {
+                  <span class="font-bold" [style.color]="options().accentColor">{{ p.didStart ? ' (Starter)' : ' (Reserve)' }}</span>
+                }
+              </p>
                @if (p.opponent) {
                 <p class="text-xs" [style.color]="options().secondaryTextColor">vs. {{ p.opponent }}</p>
               }
@@ -203,8 +224,8 @@
           
           <div class="relative z-10 grid grid-cols-3 gap-2 text-center bg-black/30 backdrop-blur-sm p-3 rounded-lg border" [style.border-color]="options().accentColor + '40'">
             @for(stat of p.stats | selectedStats; track stat.key) {
-              <div>
-                <p class="text-xl font-bold" [style.color]="options().accentColor">{{ stat.value }}</p>
+              <div (click)="onStatClick(stat)" class="cursor-pointer transition-transform duration-150 ease-in-out active:scale-95">
+                <p class="text-xl font-bold" [style.color]="stat.isHighlighted ? options().accentColor : options().primaryTextColor">{{ stat.value }}</p>
                 <p class="text-[10px] uppercase" [style.color]="options().secondaryTextColor">{{ stat.key }}</p>
               </div>
             }

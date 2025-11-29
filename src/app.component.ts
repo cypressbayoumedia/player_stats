@@ -6,9 +6,17 @@ import { StatGraphicComponent } from './components/stat-graphic/stat-graphic.com
 import { ControlsComponent } from './components/controls/controls.component';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
+import { GeminiService } from './services/gemini.service';
 
 // This is to inform TypeScript that html2canvas is loaded globally from the script tag in index.html
 declare var html2canvas: any;
+
+// Constants for Local Storage Keys
+const NFL_STATS_INSTRUCTIONS_DISMISSED = 'nfl-stats-instructions-dismissed';
+const NFL_STATS_GRAPHIC_OPTIONS = 'nfl-stats-graphic-options'; // Legacy key for migration
+const NFL_STATS_GRAPHIC_OPTIONS_1 = 'nfl-stats-graphic-options-1';
+const NFL_STATS_GRAPHIC_OPTIONS_2 = 'nfl-stats-graphic-options-2';
+const NFL_STATS_FAVORITE_PLAYERS = 'nfl-stats-favorite-players';
 
 @Component({
   selector: 'app-root',
@@ -22,37 +30,53 @@ export class AppComponent {
   @ViewChildren('fileInput') fileInputs!: QueryList<ElementRef<HTMLInputElement>>;
 
   private nflDataService = inject(NflDataService);
+  private geminiService = inject(GeminiService);
 
   // Player 1 State
   searchTerm1 = signal('');
   player1 = signal<PlayerStats | null>(null);
   isLoading1 = signal(false);
+  isSearchingRandom1 = signal(false);
   error1 = signal<string | null>(null);
   isExporting1 = signal(false);
   isUploadingImage1 = signal(false);
   isSharing1 = signal(false);
+  latestWeek1 = signal<number | null>(null);
+  statMode1 = signal<'weekly' | 'season'>('weekly');
 
   // Player 2 State
   searchTerm2 = signal('');
   player2 = signal<PlayerStats | null>(null);
   isLoading2 = signal(false);
+  isSearchingRandom2 = signal(false);
   error2 = signal<string | null>(null);
   isExporting2 = signal(false);
   isUploadingImage2 = signal(false);
   isSharing2 = signal(false);
+  latestWeek2 = signal<number | null>(null);
+  statMode2 = signal<'weekly' | 'season'>('weekly');
 
   // Shared State
   comparisonMode = signal(false);
   showInstructions = signal(true);
   webShareApiSupported = signal(false);
-  graphicOptions = signal<GraphicOptions>({
+  favoritePlayers = signal<string[]>([]);
+
+  // Independent Graphic Options
+  graphicOptions1 = signal<GraphicOptions>({
     template: 'modern',
     backgroundColor: '#1F2937',
     primaryTextColor: '#FFFFFF',
     secondaryTextColor: '#9CA3AF',
     accentColor: '#3B82F6',
   });
-  favoritePlayers = signal<string[]>([]);
+  graphicOptions2 = signal<GraphicOptions>({
+    template: 'modern',
+    backgroundColor: '#1F2937',
+    primaryTextColor: '#FFFFFF',
+    secondaryTextColor: '#9CA3AF',
+    accentColor: '#3B82F6',
+  });
 
   // Computed State for Favorites
   isFavorite1 = computed(() => {
@@ -66,50 +90,66 @@ export class AppComponent {
 
   constructor() {
     // Load instructions dismissal state
-    const instructionsDismissed = localStorage.getItem('nfl-stats-instructions-dismissed');
+    const instructionsDismissed = localStorage.getItem(NFL_STATS_INSTRUCTIONS_DISMISSED);
     if (instructionsDismissed === 'true') {
       this.showInstructions.set(false);
     }
 
-    // Load saved graphic options
-    const savedOptions = localStorage.getItem('nfl-stats-graphic-options');
-    if (savedOptions) {
+    // --- Graphic Options Loading Logic ---
+    const savedOptions1 = localStorage.getItem(NFL_STATS_GRAPHIC_OPTIONS_1);
+    const savedOptions2 = localStorage.getItem(NFL_STATS_GRAPHIC_OPTIONS_2);
+    const legacySavedOptions = localStorage.getItem(NFL_STATS_GRAPHIC_OPTIONS);
+
+    // 1. Load from new keys if they exist
+    if (savedOptions1) {
+      try { this.graphicOptions1.set(JSON.parse(savedOptions1)); } catch (e) { console.error('Failed to parse options 1', e); }
+    }
+    if (savedOptions2) {
+      try { this.graphicOptions2.set(JSON.parse(savedOptions2)); } catch (e) { console.error('Failed to parse options 2', e); }
+    }
+
+    // 2. If new keys don't exist, try migrating from legacy key
+    if (!savedOptions1 && !savedOptions2 && legacySavedOptions) {
+      console.log('Migrating legacy graphic options...');
       try {
-        const parsedOptions: GraphicOptions = JSON.parse(savedOptions);
-        this.graphicOptions.set(parsedOptions);
+        const parsedOptions: GraphicOptions = JSON.parse(legacySavedOptions);
+        this.graphicOptions1.set(parsedOptions);
+        this.graphicOptions2.set(parsedOptions); // Set both to the legacy value
+        localStorage.removeItem(NFL_STATS_GRAPHIC_OPTIONS); // Remove old key after successful migration
       } catch (e) {
-        console.error('Failed to parse graphic options from local storage', e);
-        localStorage.removeItem('nfl-stats-graphic-options');
+        console.error('Failed to parse legacy options', e);
+        localStorage.removeItem(NFL_STATS_GRAPHIC_OPTIONS);
       }
     }
     
     // Load favorite players
-    const savedFavorites = localStorage.getItem('nfl-stats-favorite-players');
+    const savedFavorites = localStorage.getItem(NFL_STATS_FAVORITE_PLAYERS);
     if (savedFavorites) {
       try {
         this.favoritePlayers.set(JSON.parse(savedFavorites));
       } catch (e) {
         console.error('Failed to parse favorite players from local storage', e);
-        localStorage.removeItem('nfl-stats-favorite-players');
+        localStorage.removeItem(NFL_STATS_FAVORITE_PLAYERS);
       }
     }
 
     // Effect to save favorites to local storage whenever they change
     effect(() => {
-      localStorage.setItem('nfl-stats-favorite-players', JSON.stringify(this.favoritePlayers()));
+      localStorage.setItem(NFL_STATS_FAVORITE_PLAYERS, JSON.stringify(this.favoritePlayers()));
     });
 
     // Effect to save graphic options to local storage whenever they change
     effect(() => {
-      localStorage.setItem('nfl-stats-graphic-options', JSON.stringify(this.graphicOptions()));
+      localStorage.setItem(NFL_STATS_GRAPHIC_OPTIONS_1, JSON.stringify(this.graphicOptions1()));
+      localStorage.setItem(NFL_STATS_GRAPHIC_OPTIONS_2, JSON.stringify(this.graphicOptions2()));
     });
 
     // Effect to handle logic when comparison mode changes
     effect(() => {
       const enabled = this.comparisonMode();
-      if (enabled && !this.player2() && this.searchTerm2()) {
-        this.searchPlayer(2);
-      } else if (!enabled) {
+      // Only clear player 2 data when comparison is turned OFF.
+      // Do not automatically search. Let the user trigger it.
+      if (!enabled) {
         this.player2.set(null);
         this.error2.set(null);
         this.searchTerm2.set('');
@@ -125,29 +165,57 @@ export class AppComponent {
 
   dismissInstructions() {
     this.showInstructions.set(false);
-    localStorage.setItem('nfl-stats-instructions-dismissed', 'true');
+    localStorage.setItem(NFL_STATS_INSTRUCTIONS_DISMISSED, 'true');
   }
 
-  searchPlayer(playerIndex: 1 | 2) {
+  async searchRandomPlayer(playerIndex: 1 | 2) {
+    const isSearchingRandom = playerIndex === 1 ? this.isSearchingRandom1 : this.isSearchingRandom2;
+    const searchTerm = playerIndex === 1 ? this.searchTerm1 : this.searchTerm2;
+    
+    isSearchingRandom.set(true);
+    try {
+      const randomName = await this.geminiService.getRandomPlayerName();
+      searchTerm.set(randomName);
+      this.searchPlayer(playerIndex, { freshSearch: true });
+    } catch (e) {
+      const error = playerIndex === 1 ? this.error1 : this.error2;
+      error.set('Could not fetch a random player.');
+      console.error(e);
+    } finally {
+      isSearchingRandom.set(false);
+    }
+  }
+
+  searchPlayer(playerIndex: 1 | 2, options: { freshSearch: boolean, week?: number }) {
+    const { freshSearch, week } = options;
     const searchTerm = playerIndex === 1 ? this.searchTerm1() : this.searchTerm2();
     if (!searchTerm.trim()) return;
 
     const isLoading = playerIndex === 1 ? this.isLoading1 : this.isLoading2;
     const player = playerIndex === 1 ? this.player1 : this.player2;
     const error = playerIndex === 1 ? this.error1 : this.error2;
+    const latestWeek = playerIndex === 1 ? this.latestWeek1 : this.latestWeek2;
+    const statMode = playerIndex === 1 ? this.statMode1() : this.statMode2();
+
+    if (freshSearch) {
+      latestWeek.set(null);
+    }
 
     isLoading.set(true);
     player.set(null);
     error.set(null);
 
-    this.nflDataService.getPlayerStats(searchTerm)
+    this.nflDataService.getPlayerStats(searchTerm, statMode, week)
       .pipe(finalize(() => isLoading.set(false)))
       .subscribe({
         next: (data) => {
           if (data) {
             player.set(data);
+            if (data.statType === 'weekly' && data.gameWeek && freshSearch) {
+              latestWeek.set(data.gameWeek);
+            }
           } else {
-            error.set(`Player "${searchTerm}" not found.`);
+            error.set(`Stats for "${searchTerm}" not found${statMode === 'weekly' && week ? ` for week ${week}`: ''}.`);
           }
         },
         error: (err) => {
@@ -159,25 +227,58 @@ export class AppComponent {
 
   handleSearch(event: Event, playerIndex: 1 | 2) {
       event.preventDefault();
-      this.searchPlayer(playerIndex);
+      this.searchPlayer(playerIndex, { freshSearch: true });
   }
 
-  onStatsChanged(newStats: Stat[], playerIndex: 1 | 2) {
-    const player = playerIndex === 1 ? this.player1 : this.player2;
-    player.update(p => p ? { ...p, stats: newStats } : null);
+  changeWeek(playerIndex: 1 | 2, direction: 'prev' | 'next') {
+    const player = playerIndex === 1 ? this.player1() : this.player2();
+    const statMode = playerIndex === 1 ? this.statMode1() : this.statMode2();
+
+    if (!player || statMode !== 'weekly' || player.gameWeek === undefined) return;
+
+    const currentWeek = player.gameWeek;
+    const newWeek = direction === 'prev' ? currentWeek - 1 : currentWeek + 1;
+
+    if (newWeek > 0) {
+      this.searchPlayer(playerIndex, { freshSearch: false, week: newWeek });
+    }
+  }
+
+  setStatMode(playerIndex: 1 | 2, mode: 'weekly' | 'season') {
+    const statModeSignal = playerIndex === 1 ? this.statMode1 : this.statMode2;
+    const playerSignal = playerIndex === 1 ? this.player1 : this.player2;
+
+    statModeSignal.set(mode);
+
+    if (playerSignal()) {
+      this.searchPlayer(playerIndex, { freshSearch: true });
+    }
   }
   
   onStatToggle(toggledStat: Stat, playerIndex: 1 | 2) {
     const player = playerIndex === 1 ? this.player1 : this.player2;
-    const currentStats = player()?.stats;
-    if (currentStats) {
-      const newStats = currentStats.map(stat =>
-        stat.key === toggledStat.key
-          ? { ...stat, selected: !stat.selected }
-          : stat
-      );
-      this.onStatsChanged(newStats, playerIndex);
-    }
+    player.update(p => {
+        if (!p) return null;
+        const newStats = p.stats.map(stat =>
+            stat.key === toggledStat.key
+            ? { ...stat, selected: !stat.selected }
+            : stat
+        );
+        return { ...p, stats: newStats };
+    });
+  }
+
+  onStatHighlight(highlightedStat: Stat, playerIndex: 1 | 2) {
+    const player = playerIndex === 1 ? this.player1 : this.player2;
+    player.update(p => {
+        if (!p) return null;
+        const newStats = p.stats.map(stat =>
+            stat.key === highlightedStat.key
+            ? { ...stat, isHighlighted: !stat.isHighlighted }
+            : stat
+        );
+        return { ...p, stats: newStats };
+    });
   }
 
   toggleFavorite(playerIndex: 1 | 2) {
@@ -200,7 +301,7 @@ export class AppComponent {
     } else {
       this.searchTerm2.set(playerName);
     }
-    this.searchPlayer(playerIndex);
+    this.searchPlayer(playerIndex, { freshSearch: true });
   }
 
   triggerFileUpload(playerIndex: 1 | 2) {

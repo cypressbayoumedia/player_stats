@@ -17,64 +17,89 @@
         <h2 class="text-2xl font-bold text-white mb-4">How to Use</h2>
         <ol class="list-decimal list-inside space-y-2">
           <li><strong>Search for a Player:</strong> Type a player's name and hit "Search".</li>
-          <li><strong>Add a Comparison:</strong> Use the "Player Comparison" toggle to add a second player.</li>
-          <li><strong>Customize:</strong> Use the controls to change the template, colors, and displayed stats.</li>
-          <li><strong>Export & Share:</strong> Click "Export PNG" to save, "Share" to post, or "Change Image" to upload your own.</li>
+          <li><strong>Change Stat Type:</strong> Use the "Weekly"/"Season" toggle to view different stat sets.</li>
+          <li><strong>Change Weeks:</strong> Use the arrow buttons to view stats from different weeks in "Weekly" mode.</li>
+          <li><strong>Customize & Share:</strong> Use the controls to change the template, colors, and export your graphic.</li>
         </ol>
       </div>
     }
 
     <div class="grid grid-cols-1 gap-4 mx-auto mb-10" [class.max-w-xl]="!comparisonMode()" [class.max-w-4xl]="comparisonMode()" [class.md:grid-cols-2]="comparisonMode()">
       <!-- Player 1 Search -->
-      <form (submit)="handleSearch($event, 1)" role="search" aria-label="Search for Player 1" class="flex gap-2 p-2 bg-gray-800 rounded-full shadow-lg">
-        <input type="text"
-               aria-label="Player 1 Name"
-               placeholder="Player 1 (e.g., Travis Kelce)"
-               class="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 px-4"
-               [(ngModel)]="searchTerm1"
-               name="searchTerm1">
-        <button type="submit"
-                aria-label="Search for Player 1"
-                class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800 disabled:cursor-not-allowed text-white font-bold py-2 px-5 rounded-full transition-colors duration-200 flex items-center justify-center"
-                [disabled]="isLoading1() || !searchTerm1().trim()">
-          @if (isLoading1()) {
-            <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
-          } @else if (!comparisonMode() && !player1()) {
-            <i class="fas fa-search" aria-hidden="true"></i>
-          } @else {
-             <span class="md:hidden">P1</span><span class="hidden md:inline">Search</span>
-          }
-        </button>
-      </form>
-       <!-- Player 2 Search -->
-      @if (comparisonMode()) {
-        <form (submit)="handleSearch($event, 2)" role="search" aria-label="Search for Player 2" class="flex gap-2 p-2 bg-gray-800 rounded-full shadow-lg">
+      <div class="flex items-center gap-2">
+        <form (submit)="handleSearch($event, 1)" role="search" aria-label="Search for Player 1" class="flex-grow flex gap-2 p-2 bg-gray-800 rounded-full shadow-lg">
           <input type="text"
-                aria-label="Player 2 Name"
-                placeholder="Player 2 (e.g., George Kittle)"
+                aria-label="Player 1 Name"
+                placeholder="Player 1 (e.g., Travis Kelce)"
                 class="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 px-4"
-                [(ngModel)]="searchTerm2"
-                name="searchTerm2">
+                [(ngModel)]="searchTerm1"
+                name="searchTerm1">
           <button type="submit"
-                  aria-label="Search for Player 2"
+                  aria-label="Search for Player 1"
                   class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800 disabled:cursor-not-allowed text-white font-bold py-2 px-5 rounded-full transition-colors duration-200 flex items-center justify-center"
-                  [disabled]="isLoading2() || !searchTerm2().trim()">
-            @if (isLoading2()) {
+                  [disabled]="isLoading1() || !searchTerm1().trim()">
+            @if (isLoading1()) {
               <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+            } @else if (!comparisonMode() && !player1()) {
+              <i class="fas fa-search" aria-hidden="true"></i>
             } @else {
-              <span class="md:hidden">P2</span><span class="hidden md:inline">Search</span>
+              <span class="md:hidden">P1</span><span class="hidden md:inline">Search</span>
             }
           </button>
         </form>
+        <button (click)="searchRandomPlayer(1)" title="Search for a random player"
+                class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-3 rounded-full transition-colors duration-200 flex items-center justify-center h-[48px] w-[48px]"
+                [disabled]="isSearchingRandom1() || isLoading1()">
+            @if (isSearchingRandom1()) {
+              <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+            } @else {
+              <i class="fas fa-dice" aria-hidden="true"></i>
+            }
+        </button>
+      </div>
+       <!-- Player 2 Search -->
+      @if (comparisonMode()) {
+        <div class="flex items-center gap-2">
+            <form (submit)="handleSearch($event, 2)" role="search" aria-label="Search for Player 2" class="flex-grow flex gap-2 p-2 bg-gray-800 rounded-full shadow-lg">
+            <input type="text"
+                    aria-label="Player 2 Name"
+                    placeholder="Player 2 (e.g., George Kittle)"
+                    class="w-full bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 px-4"
+                    [(ngModel)]="searchTerm2"
+                    name="searchTerm2">
+            <button type="submit"
+                    aria-label="Search for Player 2"
+                    class="bg-indigo-600 hover:bg-indigo-500 disabled:bg-indigo-800 disabled:cursor-not-allowed text-white font-bold py-2 px-5 rounded-full transition-colors duration-200 flex items-center justify-center"
+                    [disabled]="isLoading2() || !searchTerm2().trim()">
+                @if (isLoading2()) {
+                <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                } @else {
+                <span class="md:hidden">P2</span><span class="hidden md:inline">Search</span>
+                }
+            </button>
+            </form>
+            <button (click)="searchRandomPlayer(2)" title="Search for a random player"
+                    class="bg-gray-600 hover:bg-gray-500 text-white font-bold p-3 rounded-full transition-colors duration-200 flex items-center justify-center h-[48px] w-[48px]"
+                    [disabled]="isSearchingRandom2() || isLoading2()">
+                @if (isSearchingRandom2()) {
+                  <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
+                } @else {
+                  <i class="fas fa-dice" aria-hidden="true"></i>
+                }
+            </button>
+        </div>
       }
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
       <div class="xl:col-span-1">
         <app-controls 
-          [(options)]="graphicOptions"
+          [(options1)]="graphicOptions1"
+          [(options2)]="graphicOptions2"
           [(comparisonMode)]="comparisonMode"
-          [favoritePlayers]="favoritePlayers()"
+          [(favoritePlayers)]="favoritePlayers"
+          [teamName1]="player1()?.team"
+          [teamName2]="player2()?.team"
           (favoriteSelect)="selectFavorite($event)">
         </app-controls>
       </div>
@@ -82,16 +107,16 @@
       <div class="xl:col-span-2">
         <div class="grid grid-cols-1 gap-8" [class.lg:grid-cols-2]="comparisonMode()">
           <!-- Player 1 Column -->
-          <div class="flex flex-col items-center justify-start p-4 bg-gray-800/50 rounded-lg min-h-[600px]" [class.lg:col-span-2]="!comparisonMode()">
+          <div class="flex flex-col items-center justify-start p-4 bg-gray-800/50 rounded-lg" [class.lg:col-span-2]="!comparisonMode()">
             @if (isLoading1()) {
-              <div role="status" class="flex-grow flex items-center justify-center text-center">
+              <div role="status" class="flex-grow flex items-center justify-center text-center min-h-[600px]">
                 <div>
                   <i class="fas fa-football fa-spin fa-3x text-indigo-400" aria-hidden="true"></i>
                   <p class="mt-4 text-gray-400">Fetching {{ searchTerm1() }} stats...</p>
                 </div>
               </div>
             } @else if (error1()) {
-              <div role="alert" class="flex-grow flex items-center justify-center text-center p-8 bg-red-900/20 border border-red-500 rounded-lg">
+              <div role="alert" class="flex-grow flex items-center justify-center text-center p-8 bg-red-900/20 border border-red-500 rounded-lg min-h-[600px]">
                 <div>
                   <i class="fas fa-exclamation-triangle fa-3x text-red-400" aria-hidden="true"></i>
                   <p class="mt-4 text-xl font-semibold text-red-300">{{ error1() }}</p>
@@ -99,193 +124,253 @@
               </div>
             } @else if (player1(); as p1) {
               <div class="flex flex-col items-center gap-6 w-full">
-                <div class="flex items-center justify-center gap-4 w-full max-w-[350px]">
-                    <h3 class="text-xl font-bold text-center truncate text-white" title="{{p1.name}}">{{ p1.name }}</h3>
-                    <button (click)="toggleFavorite(1)"
-                            [attr.aria-label]="isFavorite1() ? 'Remove ' + p1.name + ' from Favorites' : 'Add ' + p1.name + ' to Favorites'"
-                            class="text-gray-400 hover:text-yellow-400 focus:outline-none focus:text-yellow-400 transition-colors text-2xl">
-                        <i class="fa-star" [class.fas]="isFavorite1()" [class.far]="!isFavorite1()" [class.text-yellow-400]="isFavorite1()"></i>
-                    </button>
+                <div class="flex flex-col items-center gap-2 w-full max-w-[350px]">
+                    <div class="flex items-center justify-center gap-4">
+                      <h3 class="text-xl font-bold text-center truncate text-white" title="{{p1.name}}">{{ p1.name }}</h3>
+                      <button (click)="toggleFavorite(1)"
+                              [attr.aria-label]="isFavorite1() ? 'Remove ' + p1.name + ' from Favorites' : 'Add ' + p1.name + ' to Favorites'"
+                              class="text-gray-400 hover:text-yellow-400 focus:outline-none focus:text-yellow-400 transition-colors text-2xl">
+                          <i class="fa-star" [class.fas]="isFavorite1()" [class.far]="!isFavorite1()" [class.text-yellow-400]="isFavorite1()"></i>
+                      </button>
+                    </div>
+
+                    <div class="flex items-center p-1 bg-gray-700 rounded-full text-sm mb-2">
+                      <button (click)="setStatMode(1, 'weekly')" 
+                              [class.bg-indigo-600]="statMode1() === 'weekly'"
+                              [class.text-white]="statMode1() === 'weekly'"
+                              class="px-3 py-1 rounded-full transition-colors">Weekly</button>
+                      <button (click)="setStatMode(1, 'season')" 
+                              [class.bg-indigo-600]="statMode1() === 'season'"
+                              [class.text-white]="statMode1() === 'season'"
+                              class="px-3 py-1 rounded-full transition-colors">Season</button>
+                    </div>
+
+                    <div class="flex items-center gap-3 text-gray-300 h-12">
+                      @if(statMode1() === 'weekly') {
+                        <button (click)="changeWeek(1, 'prev')" [disabled]="p1.gameWeek! <= 1 || isLoading1()" class="px-2 py-1 rounded-md hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                          <i class="fas fa-chevron-left"></i>
+                        </button>
+                      } @else {
+                        <div class="w-[34px]"></div> <!-- Spacer -->
+                      }
+                      <div class="text-center">
+                        <p class="font-semibold">{{ p1.season }} Season</p>
+                        @if(statMode1() === 'weekly') {
+                          <p class="text-xs text-gray-400">Week {{ p1.gameWeek }} Stats</p>
+                        } @else {
+                          <p class="text-xs text-gray-400">Total Stats</p>
+                        }
+                      </div>
+                      @if(statMode1() === 'weekly') {
+                        <button (click)="changeWeek(1, 'next')" [disabled]="p1.gameWeek! >= latestWeek1()! || isLoading1()" class="px-2 py-1 rounded-md hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                          <i class="fas fa-chevron-right"></i>
+                        </button>
+                      } @else {
+                        <div class="w-[34px]"></div> <!-- Spacer -->
+                      }
+                    </div>
                 </div>
-                <div #graphicContainer>
-                   @defer {
-                    <app-stat-graphic [player]="p1" [options]="graphicOptions()"></app-stat-graphic>
+
+                <div #graphicContainer class="w-full flex justify-center">
+                   @defer (when p1) {
+                    <app-stat-graphic [player]="p1" [options]="graphicOptions1()" (statClick)="onStatHighlight($event, 1)" />
                   } @placeholder {
-                    <div class="w-[350px] h-[500px] bg-gray-700/50 rounded-2xl flex items-center justify-center animate-pulse">
-                      <i class="fas fa-image fa-3x text-gray-500"></i>
+                    <div class="w-full max-w-[350px] h-[500px] bg-gray-700 rounded-2xl flex items-center justify-center">
+                      <p>Loading Graphic...</p>
                     </div>
                   }
                 </div>
-                <input type="file" #fileInput (change)="onFileSelected($event, 1)" accept="image/*" class="hidden">
-                <div class="flex flex-wrap justify-center gap-4">
-                  <button (click)="triggerFileUpload(1)" 
-                          [disabled]="isUploadingImage1()"
-                          [attr.aria-busy]="isUploadingImage1()"
-                          class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-full transition-colors duration-200 shadow-lg flex items-center gap-2 disabled:bg-gray-700 disabled:cursor-wait">
-                    @if(isUploadingImage1()) {
-                      <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
-                      <span>Uploading...</span>
-                    } @else {
-                      <i class="fas fa-upload" aria-hidden="true"></i>
-                      <span>Change Image</span>
-                    }
-                  </button>
-                  <button (click)="exportGraphic(1)" 
-                          class="bg-green-600 hover:bg-green-500 disabled:bg-green-800 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-full transition-colors duration-200 shadow-lg flex items-center gap-2"
-                          [disabled]="isExporting1()"
-                          [attr.aria-busy]="isExporting1()">
-                    @if (isExporting1()) {
-                      <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
-                      <span>Exporting...</span>
-                    } @else {
-                      <i class="fas fa-download" aria-hidden="true"></i>
-                      <span>Export PNG</span>
-                    }
-                  </button>
-                  @if (webShareApiSupported()) {
-                    <button (click)="shareGraphic(1)"
-                            class="bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-full transition-colors duration-200 shadow-lg flex items-center gap-2"
-                            [disabled]="isSharing1()"
-                            [attr.aria-busy]="isSharing1()">
-                      @if (isSharing1()) {
-                        <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
-                        <span>Sharing...</span>
-                      } @else {
-                        <i class="fas fa-share-alt" aria-hidden="true"></i>
-                        <span>Share</span>
+
+                <div class="w-full max-w-[350px] flex flex-col gap-4">
+                  <!-- Stat Toggles -->
+                  <div class="bg-gray-700/50 p-4 rounded-lg">
+                      <h4 class="text-sm font-medium text-gray-300 mb-3" id="stats-heading-1">Displayed Stats</h4>
+                      <div class="grid grid-cols-2 gap-x-4 gap-y-2 max-h-32 overflow-y-auto pr-2" role="group" aria-labelledby="stats-heading-1">
+                          @for (stat of p1.stats; track stat.key) {
+                              <label class="flex items-center space-x-2 cursor-pointer text-sm">
+                                  <input type="checkbox"
+                                          [checked]="stat.selected"
+                                          (change)="onStatToggle(stat, 1)"
+                                          class="form-checkbox h-4 w-4 rounded bg-gray-600 border-gray-500 text-indigo-600 focus:ring-indigo-500">
+                                  <span class="text-gray-200">{{ stat.key }}</span>
+                              </label>
+                          }
+                      </div>
+                  </div>
+                  <!-- Action Buttons -->
+                  <div class="flex gap-2 justify-center flex-wrap">
+                      <input type="file" #fileInput class="hidden" (change)="onFileSelected($event, 1)" accept="image/*">
+                      <button (click)="triggerFileUpload(1)" class="flex-1 min-w-[120px] bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-full transition-colors flex items-center justify-center gap-2" [disabled]="isUploadingImage1()">
+                          @if (isUploadingImage1()) {
+                              <i class="fas fa-spinner fa-spin"></i>
+                              <span>Uploading...</span>
+                          } @else {
+                              <i class="fas fa-upload"></i>
+                              <span>Change Image</span>
+                          }
+                      </button>
+                      <button (click)="exportGraphic(1)" class="flex-1 min-w-[120px] bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-full transition-colors flex items-center justify-center gap-2" [disabled]="isExporting1()" [attr.aria-busy]="isExporting1()">
+                          @if(isExporting1()){
+                              <i class="fas fa-spinner fa-spin"></i>
+                              <span>Exporting...</span>
+                          } @else {
+                              <i class="fas fa-download"></i>
+                              <span>Export as PNG</span>
+                          }
+                      </button>
+                      @if(webShareApiSupported()){
+                        <button (click)="shareGraphic(1)" class="flex-1 min-w-[120px] bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-full transition-colors flex items-center justify-center gap-2" [disabled]="isSharing1()" [attr.aria-busy]="isSharing1()">
+                           @if(isSharing1()){
+                              <i class="fas fa-spinner fa-spin"></i>
+                              <span>Sharing...</span>
+                           } @else {
+                              <i class="fas fa-share-alt"></i>
+                              <span>Share</span>
+                           }
+                        </button>
                       }
-                    </button>
-                  }
-                </div>
-                 <!-- Player 1 Stat Toggles -->
-                <div class="w-full max-w-[350px] mt-4" role="group" aria-labelledby="p1-stats-heading">
-                  <h4 id="p1-stats-heading" class="text-md font-medium text-gray-300 mb-2 border-t border-gray-700 pt-4">Displayed Stats</h4>
-                  <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
-                    @for (stat of p1.stats; track stat.key; let i = $index) {
-                      <label class="flex items-center justify-between bg-gray-700/50 p-2 rounded-md hover:bg-gray-700 transition-colors cursor-pointer">
-                        <span class="text-sm text-gray-200" id="p1-stat-{{i}}">{{ stat.key }}</span>
-                        <input type="checkbox"
-                              class="h-5 w-5 rounded bg-gray-600 border-gray-500 text-indigo-500 focus:ring-indigo-600 focus:ring-offset-gray-800"
-                              [checked]="stat.selected"
-                              (change)="onStatToggle(stat, 1)"
-                              [attr.aria-labelledby]="'p1-stat-' + i">
-                      </label>
-                    }
                   </div>
                 </div>
               </div>
             } @else {
-              <div class="flex-grow flex items-center justify-center text-center">
-                <div>
-                  <i class="fas fa-search fa-3x text-gray-600" aria-hidden="true"></i>
-                  <p class="mt-4 text-gray-400">Search for a player to get started.</p>
-                </div>
-              </div>
+               <div class="flex-grow flex items-center justify-center text-center min-h-[600px]">
+                <p class="text-gray-400">Search for a player to get started.</p>
+               </div>
             }
           </div>
-
+          
           <!-- Player 2 Column -->
           @if (comparisonMode()) {
-            <div class="flex flex-col items-center justify-start p-4 bg-gray-800/50 rounded-lg min-h-[600px]">
-              @if (isLoading2()) {
-                <div role="status" class="flex-grow flex items-center justify-center text-center">
-                  <div>
-                    <i class="fas fa-football fa-spin fa-3x text-indigo-400" aria-hidden="true"></i>
-                    <p class="mt-4 text-gray-400">Fetching {{ searchTerm2() }} stats...</p>
-                  </div>
-                </div>
-              } @else if (error2()) {
-                <div role="alert" class="flex-grow flex items-center justify-center text-center p-8 bg-red-900/20 border border-red-500 rounded-lg">
-                  <div>
-                    <i class="fas fa-exclamation-triangle fa-3x text-red-400" aria-hidden="true"></i>
-                    <p class="mt-4 text-xl font-semibold text-red-300">{{ error2() }}</p>
-                  </div>
-                </div>
-              } @else if (player2(); as p2) {
-                <div class="flex flex-col items-center gap-6 w-full">
-                  <div class="flex items-center justify-center gap-4 w-full max-w-[350px]">
-                    <h3 class="text-xl font-bold text-center truncate text-white" title="{{p2.name}}">{{ p2.name }}</h3>
-                    <button (click)="toggleFavorite(2)"
-                            [attr.aria-label]="isFavorite2() ? 'Remove ' + p2.name + ' from Favorites' : 'Add ' + p2.name + ' to Favorites'"
-                            class="text-gray-400 hover:text-yellow-400 focus:outline-none focus:text-yellow-400 transition-colors text-2xl">
-                        <i class="fa-star" [class.fas]="isFavorite2()" [class.far]="!isFavorite2()" [class.text-yellow-400]="isFavorite2()"></i>
-                    </button>
-                  </div>
-                  <div #graphicContainer>
-                    @defer {
-                      <app-stat-graphic [player]="p2" [options]="graphicOptions()"></app-stat-graphic>
-                    } @placeholder {
-                      <div class="w-[350px] h-[500px] bg-gray-700/50 rounded-2xl flex items-center justify-center animate-pulse">
-                        <i class="fas fa-image fa-3x text-gray-500"></i>
-                      </div>
-                    }
-                  </div>
-                  <input type="file" #fileInput (change)="onFileSelected($event, 2)" accept="image/*" class="hidden">
-                  <div class="flex flex-wrap justify-center gap-4">
-                    <button (click)="triggerFileUpload(2)" 
-                            [disabled]="isUploadingImage2()"
-                            [attr.aria-busy]="isUploadingImage2()"
-                            class="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded-full transition-colors duration-200 shadow-lg flex items-center gap-2 disabled:bg-gray-700 disabled:cursor-wait">
-                      @if(isUploadingImage2()) {
-                        <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
-                        <span>Uploading...</span>
-                      } @else {
-                        <i class="fas fa-upload" aria-hidden="true"></i>
-                        <span>Change Image</span>
-                      }
-                    </button>
-                    <button (click)="exportGraphic(2)" 
-                            class="bg-green-600 hover:bg-green-500 disabled:bg-green-800 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-full transition-colors duration-200 shadow-lg flex items-center gap-2"
-                            [disabled]="isExporting2()"
-                            [attr.aria-busy]="isExporting2()">
-                      @if (isExporting2()) {
-                        <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
-                        <span>Exporting...</span>
-                      } @else {
-                        <i class="fas fa-download" aria-hidden="true"></i>
-                        <span>Export PNG</span>
-                      }
-                    </button>
-                    @if (webShareApiSupported()) {
-                      <button (click)="shareGraphic(2)"
-                              class="bg-blue-600 hover:bg-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-bold py-2 px-6 rounded-full transition-colors duration-200 shadow-lg flex items-center gap-2"
-                              [disabled]="isSharing2()"
-                              [attr.aria-busy]="isSharing2()">
-                        @if (isSharing2()) {
-                          <i class="fas fa-spinner fa-spin" aria-hidden="true"></i>
-                          <span>Sharing...</span>
-                        } @else {
-                          <i class="fas fa-share-alt" aria-hidden="true"></i>
-                          <span>Share</span>
-                        }
-                      </button>
-                    }
-                  </div>
-                  <!-- Player 2 Stat Toggles -->
-                  <div class="w-full max-w-[350px] mt-4" role="group" aria-labelledby="p2-stats-heading">
-                    <h4 id="p2-stats-heading" class="text-md font-medium text-gray-300 mb-2 border-t border-gray-700 pt-4">Displayed Stats</h4>
-                    <div class="space-y-2 max-h-48 overflow-y-auto pr-2">
-                      @for (stat of p2.stats; track stat.key; let i = $index) {
-                        <label class="flex items-center justify-between bg-gray-700/50 p-2 rounded-md hover:bg-gray-700 transition-colors cursor-pointer">
-                          <span class="text-sm text-gray-200" id="p2-stat-{{i}}">{{ stat.key }}</span>
-                          <input type="checkbox"
-                                class="h-5 w-5 rounded bg-gray-600 border-gray-500 text-indigo-500 focus:ring-indigo-600 focus:ring-offset-gray-800"
-                                [checked]="stat.selected"
-                                (change)="onStatToggle(stat, 2)"
-                                [attr.aria-labelledby]="'p2-stat-' + i">
-                        </label>
-                      }
+            <div class="flex flex-col items-center justify-start p-4 bg-gray-800/50 rounded-lg">
+                @if (isLoading2()) {
+                    <div role="status" class="flex-grow flex items-center justify-center text-center min-h-[600px]">
+                        <div>
+                        <i class="fas fa-football fa-spin fa-3x text-indigo-400" aria-hidden="true"></i>
+                        <p class="mt-4 text-gray-400">Fetching {{ searchTerm2() }} stats...</p>
+                        </div>
                     </div>
-                  </div>
-                </div>
-              } @else {
-                <div class="flex-grow flex items-center justify-center text-center">
-                  <div>
-                    <i class="fas fa-search fa-3x text-gray-600" aria-hidden="true"></i>
-                    <p class="mt-4 text-gray-400">Search for a player to get started.</p>
-                  </div>
-                </div>
-              }
+                } @else if (error2()) {
+                    <div role="alert" class="flex-grow flex items-center justify-center text-center p-8 bg-red-900/20 border border-red-500 rounded-lg min-h-[600px]">
+                        <div>
+                        <i class="fas fa-exclamation-triangle fa-3x text-red-400" aria-hidden="true"></i>
+                        <p class="mt-4 text-xl font-semibold text-red-300">{{ error2() }}</p>
+                        </div>
+                    </div>
+                } @else if (player2(); as p2) {
+                    <div class="flex flex-col items-center gap-6 w-full">
+                        <div class="flex flex-col items-center gap-2 w-full max-w-[350px]">
+                            <div class="flex items-center justify-center gap-4">
+                              <h3 class="text-xl font-bold text-center truncate text-white" title="{{p2.name}}">{{ p2.name }}</h3>
+                              <button (click)="toggleFavorite(2)"
+                                      [attr.aria-label]="isFavorite2() ? 'Remove ' + p2.name + ' from Favorites' : 'Add ' + p2.name + ' to Favorites'"
+                                      class="text-gray-400 hover:text-yellow-400 focus:outline-none focus:text-yellow-400 transition-colors text-2xl">
+                                  <i class="fa-star" [class.fas]="isFavorite2()" [class.far]="!isFavorite2()" [class.text-yellow-400]="isFavorite2()"></i>
+                              </button>
+                            </div>
+
+                           <div class="flex items-center p-1 bg-gray-700 rounded-full text-sm mb-2">
+                              <button (click)="setStatMode(2, 'weekly')" 
+                                      [class.bg-indigo-600]="statMode2() === 'weekly'"
+                                      [class.text-white]="statMode2() === 'weekly'"
+                                      class="px-3 py-1 rounded-full transition-colors">Weekly</button>
+                              <button (click)="setStatMode(2, 'season')" 
+                                      [class.bg-indigo-600]="statMode2() === 'season'"
+                                      [class.text-white]="statMode2() === 'season'"
+                                      class="px-3 py-1 rounded-full transition-colors">Season</button>
+                            </div>
+
+                            <div class="flex items-center gap-3 text-gray-300 h-12">
+                              @if(statMode2() === 'weekly') {
+                                <button (click)="changeWeek(2, 'prev')" [disabled]="p2.gameWeek! <= 1 || isLoading2()" class="px-2 py-1 rounded-md hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                                  <i class="fas fa-chevron-left"></i>
+                                </button>
+                              } @else {
+                                <div class="w-[34px]"></div> <!-- Spacer -->
+                              }
+                              <div class="text-center">
+                                <p class="font-semibold">{{ p2.season }} Season</p>
+                                @if(statMode2() === 'weekly') {
+                                  <p class="text-xs text-gray-400">Week {{ p2.gameWeek }} Stats</p>
+                                } @else {
+                                  <p class="text-xs text-gray-400">Total Stats</p>
+                                }
+                              </div>
+                              @if(statMode2() === 'weekly') {
+                                <button (click)="changeWeek(2, 'next')" [disabled]="p2.gameWeek! >= latestWeek2()! || isLoading2()" class="px-2 py-1 rounded-md hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                                  <i class="fas fa-chevron-right"></i>
+                                </button>
+                              } @else {
+                                <div class="w-[34px]"></div> <!-- Spacer -->
+                              }
+                            </div>
+                        </div>
+
+                        <div #graphicContainer class="w-full flex justify-center">
+                           @defer (when p2) {
+                            <app-stat-graphic [player]="p2" [options]="graphicOptions2()" (statClick)="onStatHighlight($event, 2)" />
+                          } @placeholder {
+                             <div class="w-full max-w-[350px] h-[500px] bg-gray-700 rounded-2xl flex items-center justify-center">
+                              <p>Loading Graphic...</p>
+                            </div>
+                          }
+                        </div>
+
+                        <div class="w-full max-w-[350px] flex flex-col gap-4">
+                           <!-- Stat Toggles -->
+                            <div class="bg-gray-700/50 p-4 rounded-lg">
+                                <h4 class="text-sm font-medium text-gray-300 mb-3" id="stats-heading-2">Displayed Stats</h4>
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-2 max-h-32 overflow-y-auto pr-2" role="group" aria-labelledby="stats-heading-2">
+                                    @for (stat of p2.stats; track stat.key) {
+                                        <label class="flex items-center space-x-2 cursor-pointer text-sm">
+                                            <input type="checkbox"
+                                                    [checked]="stat.selected"
+                                                    (change)="onStatToggle(stat, 2)"
+                                                    class="form-checkbox h-4 w-4 rounded bg-gray-600 border-gray-500 text-indigo-600 focus:ring-indigo-500">
+                                            <span class="text-gray-200">{{ stat.key }}</span>
+                                        </label>
+                                    }
+                                </div>
+                            </div>
+                           <!-- Action Buttons -->
+                            <div class="flex gap-2 justify-center flex-wrap">
+                                <input type="file" #fileInput class="hidden" (change)="onFileSelected($event, 2)" accept="image/*">
+                                <button (click)="triggerFileUpload(2)" class="flex-1 min-w-[120px] bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-full transition-colors flex items-center justify-center gap-2" [disabled]="isUploadingImage2()">
+                                    @if (isUploadingImage2()) {
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <span>Uploading...</span>
+                                    } @else {
+                                        <i class="fas fa-upload"></i>
+                                        <span>Change Image</span>
+                                    }
+                                </button>
+                                <button (click)="exportGraphic(2)" class="flex-1 min-w-[120px] bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-full transition-colors flex items-center justify-center gap-2" [disabled]="isExporting2()" [attr.aria-busy]="isExporting2()">
+                                   @if(isExporting2()){
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                        <span>Exporting...</span>
+                                    } @else {
+                                        <i class="fas fa-download"></i>
+                                        <span>Export as PNG</span>
+                                    }
+                                </button>
+                                @if(webShareApiSupported()){
+                                    <button (click)="shareGraphic(2)" class="flex-1 min-w-[120px] bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded-full transition-colors flex items-center justify-center gap-2" [disabled]="isSharing2()" [attr.aria-busy]="isSharing2()">
+                                       @if(isSharing2()){
+                                            <i class="fas fa-spinner fa-spin"></i>
+                                            <span>Sharing...</span>
+                                       } @else {
+                                            <i class="fas fa-share-alt"></i>
+                                            <span>Share</span>
+                                       }
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                } @else {
+                    <div class="flex-grow flex items-center justify-center text-center min-h-[600px]">
+                        <p class="text-gray-400">Search for a player to compare.</p>
+                    </div>
+                }
             </div>
           }
         </div>

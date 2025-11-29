@@ -18,11 +18,8 @@ export class GeminiService {
     this.ai = new GoogleGenAI({ apiKey });
   }
 
-  async getPlayerStats(playerName: string): Promise<PlayerStats | null> {
-    const systemInstruction = `You are an expert sports data API. Your purpose is to retrieve and format NFL player statistics based on their most recent game. You must provide data in a specific JSON format. Accuracy is the highest priority, especially for player images.`;
-
-    const prompt = `For the NFL player "${playerName}", find the statistics from their most recently completed official game, including the name of the opponent team.
-    
+  async getPlayerStats(playerName: string, mode: 'weekly' | 'season', week?: number): Promise<PlayerStats | null> {
+    const commonInstructions = `
 You MUST use your search tool to find the most up-to-date, real-world information. This includes accurate player images.
 
 When searching for images, prioritize official sources like ESPN, NFL.com, or team websites. For better compatibility, also check sources with permissive CORS policies like Wikimedia Commons or Wikipedia. The player image MUST be of the correct player. For example, if the player is Travis Kelce, the image must be of Travis Kelce of the Kansas City Chiefs.
@@ -35,35 +32,65 @@ Provide a comprehensive list of 8-10 of the most relevant and impactful stats fo
 
 You MUST include a 'selected' boolean field for each stat. Set 'selected' to 'true' for the 5-6 most important stats for the player's position, and 'false' for the rest. This provides a good default but allows the user to customize.
 
-Return the data as a single, minified JSON object with NO surrounding text, markdown formatting (like \`\`\`json), or explanations.
+Return the data as a single, minified JSON object with NO surrounding text, markdown formatting (like \`\`\`json), or explanations.`;
 
-The JSON object must have the following structure:
-{
-  "name": "Player's Full Name",
-  "position": "Player's Position (e.g., QB)",
-  "team": "Player's Current Team Name",
-  "opponent": "The name of the opponent team from the most recent game.",
-  "playerImageUrl": "A direct HTTPS URL to a recent, high-quality headshot of the player. VERIFY that the image is actually of '${playerName}'. Do not provide an image of a different player.",
-  "stats": [
-    { "key": "STAT_NAME_1", "value": "STAT_VALUE_1", "selected": true },
-    { "key": "STAT_NAME_2", "value": "STAT_VALUE_2", "selected": false }
-  ]
-}
+    const weeklyPrompt = `For the NFL player "${playerName}", find the statistics ${week ? `from Week ${week}` : `from their most recently completed official game`} of the current or most recent NFL season (e.g., the 2024-2025 season). You must also determine if the player was the official starter for that game.
+    ${commonInstructions}
+    The JSON object must have the following structure:
+    {
+      "name": "Player's Full Name",
+      "position": "Player's Position (e.g., QB)",
+      "team": "Player's Current Team Name",
+      "opponent": "The name of the opponent team from that game.",
+      "gameWeek": "The week number of the game (as a number).",
+      "season": "The season year (e.g., '2024').",
+      "statType": "weekly",
+      "didStart": "A boolean value indicating if the player was the official starter for this game.",
+      "playerImageUrl": "A direct HTTPS URL to a recent, high-quality headshot of the player. VERIFY that the image is actually of '${playerName}'. Do not provide an image of a different player.",
+      "stats": [
+        { "key": "STAT_NAME_1", "value": "STAT_VALUE_1", "selected": true, "isHighlighted": false },
+        { "key": "STAT_NAME_2", "value": "STAT_VALUE_2", "selected": false, "isHighlighted": false }
+      ]
+    }`;
 
-CRITICAL: All URLs must be direct links to the image file (e.g., ending in .png, .jpg, .webp) and must be publicly accessible to avoid CORS issues. Do not link to web pages. For the playerImageUrl, do not use Fandom/Wikia URLs as they often block direct access.`;
+    const seasonPrompt = `For the NFL player "${playerName}", find their total, aggregated statistics for the current or most recent NFL season (e.g., the 2024-2025 season).
+    ${commonInstructions}
+    The JSON object must have the following structure:
+    {
+      "name": "Player's Full Name",
+      "position": "Player's Position (e.g., QB)",
+      "team": "Player's Current Team Name",
+      "season": "The season year (e.g., '2024').",
+      "statType": "season",
+      "playerImageUrl": "A direct HTTPS URL to a recent, high-quality headshot of the player. VERIFY that the image is actually of '${playerName}'. Do not provide an image of a different player.",
+      "stats": [
+        { "key": "STAT_NAME_1", "value": "STAT_VALUE_1", "selected": true, "isHighlighted": false },
+        { "key": "STAT_NAME_2", "value": "STAT_VALUE_2", "selected": false, "isHighlighted": false }
+      ]
+    }`;
+
+    const criticalInstructions = `\nCRITICAL: All URLs must be direct links to the image file (e.g., ending in .png, .jpg, .webp) and must be publicly accessible to avoid CORS issues. Do not link to web pages. For the playerImageUrl, do not use Fandom/Wikia URLs as they often block direct access.`;
+
+    const prompt = (mode === 'season' ? seasonPrompt : weeklyPrompt) + criticalInstructions;
 
     try {
       const response = await this.ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: prompt,
+        contents: {
+          role: 'user',
+          parts: [{text: prompt}]
+        },
         config: {
-          systemInstruction,
           tools: [{ googleSearch: {} }],
         },
       });
 
-      // Find the start and end of the JSON object in the response.
       const text = response.text;
+      // FIX: Added a check for null/undefined text to prevent crash on empty response.
+      if (!text) {
+        throw new Error("API returned an empty response.");
+      }
+      
       const jsonStart = text.indexOf('{');
       const jsonEnd = text.lastIndexOf('}');
       
@@ -82,6 +109,42 @@ CRITICAL: All URLs must be direct links to the image file (e.g., ending in .png,
           throw new Error(`Unexpected token in API response. The API returned conversational text instead of JSON. Full response: ${error.message}`);
       }
       return null;
+    }
+  }
+
+  async getRandomPlayerName(): Promise<string> {
+    const prompt = `From the following list of superstar NFL players, please select one name at random and return only that name as a string, with no additional text or explanation.
+
+List of Players:
+- Tom Brady
+- Patrick Mahomes
+- Aaron Rodgers
+- Justin Jefferson
+- Ja'Marr Chase
+- Travis Kelce
+- George Kittle
+- Christian McCaffrey
+- Derrick Henry
+- Myles Garrett
+- T.J. Watt
+- Aaron Donald
+- Lamar Jackson
+- Joe Burrow
+- Josh Allen
+- CeeDee Lamb
+- Tyreek Hill
+- Micah Parsons`;
+
+    try {
+        const response = await this.ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+        });
+        return response.text.trim();
+    } catch (error) {
+        console.error('Error fetching random player name:', error);
+        // Fallback to a default name if the API fails
+        return 'Patrick Mahomes';
     }
   }
 }

@@ -2,6 +2,7 @@ export interface Stat {
   key: string;
   value: string | number;
   selected: boolean;
+  isHighlighted?: boolean;
 }
 
 export interface PlayerStats {
@@ -11,7 +12,12 @@ export interface PlayerStats {
   teamLogoUrl: string;
   playerImageUrl: string;
   stats: Stat[];
-  opponent: string;
+  season: string;
+  statType: 'weekly' | 'season';
+  // Weekly-specific stats
+  opponent?: string;
+  gameWeek?: number;
+  didStart?: boolean;
 }
 
 export interface GraphicOptions {

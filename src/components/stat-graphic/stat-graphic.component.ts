@@ -1,9 +1,10 @@
 
 
 
-import { Component, ChangeDetectionStrategy, input, signal, effect } from '@angular/core';
+
+import { Component, ChangeDetectionStrategy, input, signal, effect, output } from '@angular/core';
 import { CommonModule, KeyValuePipe } from '@angular/common';
-import { PlayerStats, GraphicOptions } from '../../models/player-stats.model';
+import { PlayerStats, GraphicOptions, Stat } from '../../models/player-stats.model';
 import { SelectedStatsPipe } from '../../pipes/selected-stats.pipe';
 
 @Component({
@@ -16,6 +17,7 @@ import { SelectedStatsPipe } from '../../pipes/selected-stats.pipe';
 export class StatGraphicComponent {
   player = input.required<PlayerStats>();
   options = input.required<GraphicOptions>();
+  statClick = output<Stat>();
 
   playerImageError = signal(false);
   teamLogoError = signal(false);
@@ -27,5 +29,9 @@ export class StatGraphicComponent {
       this.playerImageError.set(false);
       this.teamLogoError.set(false);
     });
+  }
+
+  onStatClick(stat: Stat) {
+    this.statClick.emit(stat);
   }
 }
