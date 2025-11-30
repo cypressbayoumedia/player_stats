@@ -20,9 +20,7 @@ export class GeminiService {
 
   async getPlayerStats(playerName: string, mode: 'weekly' | 'season', week?: number): Promise<PlayerStats | null> {
     const commonInstructions = `
-You MUST use your search tool to find the most up-to-date, real-world information. This includes accurate player images.
-
-When searching for images, prioritize official sources like ESPN, NFL.com, or team websites. For better compatibility, also check sources with permissive CORS policies like Wikimedia Commons or Wikipedia. The player image MUST be of the correct player. For example, if the player is Travis Kelce, the image must be of Travis Kelce of the Kansas City Chiefs.
+You MUST use your search tool to find the most up-to-date, real-world information.
 
 Provide a comprehensive list of 8-10 of the most relevant and impactful stats for their position. For example:
 - For a QB: Passing Yards, Touchdowns, Completions, Attempts, Interceptions, QBR.
@@ -46,7 +44,6 @@ Return the data as a single, minified JSON object with NO surrounding text, mark
       "season": "The season year (e.g., '2024').",
       "statType": "weekly",
       "didStart": "A boolean value indicating if the player was the official starter for this game.",
-      "playerImageUrl": "A direct HTTPS URL to a recent, high-quality headshot of the player. VERIFY that the image is actually of '${playerName}'. Do not provide an image of a different player.",
       "stats": [
         { "key": "STAT_NAME_1", "value": "STAT_VALUE_1", "selected": true, "isHighlighted": false },
         { "key": "STAT_NAME_2", "value": "STAT_VALUE_2", "selected": false, "isHighlighted": false }
@@ -62,16 +59,13 @@ Return the data as a single, minified JSON object with NO surrounding text, mark
       "team": "Player's Current Team Name",
       "season": "The season year (e.g., '2024').",
       "statType": "season",
-      "playerImageUrl": "A direct HTTPS URL to a recent, high-quality headshot of the player. VERIFY that the image is actually of '${playerName}'. Do not provide an image of a different player.",
       "stats": [
         { "key": "STAT_NAME_1", "value": "STAT_VALUE_1", "selected": true, "isHighlighted": false },
         { "key": "STAT_NAME_2", "value": "STAT_VALUE_2", "selected": false, "isHighlighted": false }
       ]
     }`;
 
-    const criticalInstructions = `\nCRITICAL: All URLs must be direct links to the image file (e.g., ending in .png, .jpg, .webp) and must be publicly accessible to avoid CORS issues. Do not link to web pages. For the playerImageUrl, do not use Fandom/Wikia URLs as they often block direct access.`;
-
-    const prompt = (mode === 'season' ? seasonPrompt : weeklyPrompt) + criticalInstructions;
+    const prompt = (mode === 'season' ? seasonPrompt : weeklyPrompt);
 
     try {
       const response = await this.ai.models.generateContent({
@@ -86,7 +80,6 @@ Return the data as a single, minified JSON object with NO surrounding text, mark
       });
 
       const text = response.text;
-      // FIX: Added a check for null/undefined text to prevent crash on empty response.
       if (!text) {
         throw new Error("API returned an empty response.");
       }
@@ -104,7 +97,6 @@ Return the data as a single, minified JSON object with NO surrounding text, mark
 
     } catch (error) {
       console.error('Error calling Gemini API or parsing response:', error);
-      // Try to parse a more specific error from the user prompt
       if (error instanceof Error && error.message.includes('not valid JSON')) {
           throw new Error(`Unexpected token in API response. The API returned conversational text instead of JSON. Full response: ${error.message}`);
       }

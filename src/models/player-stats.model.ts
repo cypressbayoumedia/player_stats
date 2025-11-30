@@ -10,7 +10,7 @@ export interface PlayerStats {
   position: string;
   team: string;
   teamLogoUrl: string;
-  playerImageUrl: string;
+  playerImageUrl?: string; // Made optional
   stats: Stat[];
   season: string;
   statType: 'weekly' | 'season';

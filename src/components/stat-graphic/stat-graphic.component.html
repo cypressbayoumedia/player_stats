@@ -6,7 +6,7 @@
     @switch (options().template) {
       @case ('modern') {
         <div class="relative w-full h-full flex flex-col justify-end p-4 bg-gray-800">
-          @if (!playerImageError()) {
+          @if (p.playerImageUrl && !playerImageError()) {
             <img [src]="p.playerImageUrl" (error)="playerImageError.set(true)" alt="{{ p.name }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover">
           } @else {
             <div class="absolute inset-0 bg-gray-700 flex items-center justify-center">
@@ -45,7 +45,7 @@
       @case ('classic') {
         <div class="w-full h-full flex flex-col">
           <div class="flex-grow relative">
-            @if (!playerImageError()) {
+            @if (p.playerImageUrl && !playerImageError()) {
               <img [src]="p.playerImageUrl" class="absolute inset-0 w-full h-full object-cover object-top" alt="{{p.name}}" (error)="playerImageError.set(true)" loading="lazy"/>
             } @else {
               <div class="absolute inset-0 bg-gray-700 flex items-center justify-center">
@@ -101,7 +101,7 @@
                 }
             </div>
             <div class="flex-grow flex items-center justify-center mb-4">
-                @if (!playerImageError()) {
+                @if (p.playerImageUrl && !playerImageError()) {
                   <img [src]="p.playerImageUrl" class="w-[200px] h-[200px] object-cover rounded-full border-4 shadow-xl shadow-black/30" [style.border-color]="options().accentColor" alt="{{p.name}}" (error)="playerImageError.set(true)" loading="lazy"/>
                 } @else {
                   <div class="w-[200px] h-[200px] rounded-full border-4 bg-gray-700 flex items-center justify-center shadow-xl shadow-black/30" [style.border-color]="options().accentColor">
@@ -122,7 +122,7 @@
       @case ('spotlight') {
         <div class="relative w-full h-full flex flex-col items-center justify-center p-4 overflow-hidden">
           <div class="relative mb-4">
-            @if (!playerImageError()) {
+            @if (p.playerImageUrl && !playerImageError()) {
               <img [src]="p.playerImageUrl" (error)="playerImageError.set(true)" alt="{{p.name}}" loading="lazy" class="relative z-10 w-48 h-48 rounded-full object-cover border-2" [style.border-color]="options().accentColor" />
               <div class="absolute -inset-1 rounded-full blur-xl animate-pulse" [style.background-color]="options().accentColor" style="opacity: 0.7;"></div>
             } @else {
@@ -157,7 +157,7 @@
             <h2 class="text-4xl sm:text-3xl font-black uppercase">The Daily Stat</h2>
           </div>
           <div class="flex items-start gap-4 mb-4">
-            @if (!playerImageError()) {
+            @if (p.playerImageUrl && !playerImageError()) {
               <img [src]="p.playerImageUrl" (error)="playerImageError.set(true)" alt="{{p.name}}" loading="lazy" class="w-28 h-28 object-cover border-2 p-1" style="border-color: #3C3C3C50; filter: sepia(0.5) contrast(0.9) grayscale(0.1);" />
             } @else {
               <div class="w-28 h-28 border-2 bg-gray-200 flex items-center justify-center" style="border-color: #3C3C3C50;">
@@ -213,7 +213,7 @@
           </div>
 
           <div class="relative z-10 flex-grow flex items-center justify-center my-2">
-            @if (!playerImageError()) {
+            @if (p.playerImageUrl && !playerImageError()) {
               <img [src]="p.playerImageUrl" (error)="playerImageError.set(true)" alt="{{p.name}}" loading="lazy" class="max-w-[80%] max-h-[240px] object-contain" [style.filter]="'drop-shadow(4px 4px 8px rgba(0,0,0,0.5))'"/>
             } @else {
                <div class="w-48 h-48 bg-gray-700/50 flex items-center justify-center rounded-lg">

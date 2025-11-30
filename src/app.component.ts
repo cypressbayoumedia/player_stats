@@ -18,6 +18,8 @@ const NFL_STATS_GRAPHIC_OPTIONS_1 = 'nfl-stats-graphic-options-1';
 const NFL_STATS_GRAPHIC_OPTIONS_2 = 'nfl-stats-graphic-options-2';
 const NFL_STATS_FAVORITE_PLAYERS = 'nfl-stats-favorite-players';
 
+const EMPTY_PLAYER_STATS: PlayerStats = { name: '', position: '', team: '', teamLogoUrl: '', stats: [], season: '', statType: 'weekly' };
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -88,6 +90,10 @@ export class AppComponent {
     return p2 ? this.favoritePlayers().includes(p2.name) : false;
   });
 
+  // Computed State for Displaying Unified Stats
+  displayPlayer1 = computed<PlayerStats>(() => this.unifyStats(this.player1(), this.player2()));
+  displayPlayer2 = computed<PlayerStats>(() => this.unifyStats(this.player2(), this.player1()));
+
   constructor() {
     // Load instructions dismissal state
     const instructionsDismissed = localStorage.getItem(NFL_STATS_INSTRUCTIONS_DISMISSED);
@@ -147,8 +153,6 @@ export class AppComponent {
     // Effect to handle logic when comparison mode changes
     effect(() => {
       const enabled = this.comparisonMode();
-      // Only clear player 2 data when comparison is turned OFF.
-      // Do not automatically search. Let the user trigger it.
       if (!enabled) {
         this.player2.set(null);
         this.error2.set(null);
@@ -161,6 +165,32 @@ export class AppComponent {
     if (navigator.share) {
       this.webShareApiSupported.set(true);
     }
+  }
+
+  private unifyStats(mainPlayer: PlayerStats | null, comparePlayer: PlayerStats | null): PlayerStats {
+    if (!mainPlayer) {
+      return EMPTY_PLAYER_STATS;
+    }
+    
+    // If not in comparison mode, or players are different positions, or other player doesn't exist, return main player as is.
+    if (!this.comparisonMode() || !comparePlayer || mainPlayer.position !== comparePlayer.position) {
+      return mainPlayer;
+    }
+
+    // Logic to unify stats for same-position players
+    const allStatKeys = new Set([...mainPlayer.stats.map(s => s.key), ...comparePlayer.stats.map(s => s.key)]);
+    const mainPlayerStatMap = new Map(mainPlayer.stats.map(s => [s.key, s]));
+
+    const unifiedStats: Stat[] = Array.from(allStatKeys).map(key => {
+      const existingStat = mainPlayerStatMap.get(key);
+      if (existingStat) {
+        return existingStat;
+      }
+      // If the main player doesn't have this stat, add it with 'N/A'
+      return { key, value: 'N/A', selected: true, isHighlighted: false };
+    });
+    
+    return { ...mainPlayer, stats: unifiedStats };
   }
 
   dismissInstructions() {
